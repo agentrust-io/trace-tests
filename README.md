@@ -1,31 +1,50 @@
-# TRACE Compliance Tests
+# TRACE Conformance Test Suite
 
-Conformance test suite for TRACE — Trust Runtime Attestation and Compliance Evidence. Governance tools that pass this suite qualify for TRACE Certification.
+Conformance tests for TRACE v0.1 — Trust, Runtime Attestation, and Compliance Evidence. An implementation producing Trust Records must pass all tests in the applicable level before using the "TRACE-conformant" mark.
 
-## What Is Tested
+## Test modules
 
-| Category | Tests |
-|----------|-------|
-| Claim format | JSON Schema validation, required fields, version compatibility |
-| Chain integrity | Merkle chain verification, tamper detection, gap detection |
-| Policy attestation | Policy bundle hash binding, enforcement mode verification |
-| Provider coverage | Per-provider attestation report verification (TPM, SEV-SNP, TDX, OPAQUE) |
-| Tamper detection | Injected tamper scenarios at entry 1, mid-chain, and final entry |
+| Module | ID prefix | Spec section | What it tests |
+|---|---|---|---|
+| Envelope | `TR-ENV` | §3.2 | EAT envelope structure, `eat_profile` URI, required fields, `iat` validity |
+| Signature | `TR-SIG` | §3.2.1 | Algorithm conformance (ES256/ES384/EdDSA), key binding, chain verification |
+| Runtime | `TR-RTE` | §3.1 | TEE platform enum, measurement format, RIM URI resolution |
+| Policy | `TR-POL` | §3.1 | Policy bundle hash format, enforcement mode values, TEE binding |
+| Transcript | `TR-TXN` | §3.1 | Tool-call transcript hash binding (Phase 2+ records) |
+| Transparency | `TR-ANC` | §3.2 | SCITT receipt URI format, inclusion proof structure |
+| Provenance | `TR-SCA` | §3.1 | SLSA provenance level, builder URI, digest format |
 
-## Running the Tests
+## Conformance levels
+
+| Level | Required modules | Use case |
+|---|---|---|
+| 0 | TR-ENV, TR-SIG, TR-POL | Software-only development and staging |
+| 1 | Level 0 + TR-RTE, TR-SCA | Production TEE-attested records |
+| 2 | Level 1 + TR-TXN, TR-ANC | Full records with transparency anchoring |
+
+## Running
 
 ```bash
-pip install trace-verify
-trace-tests run --implementation ./my-governance-tool --output results.json
+pip install trace-tests
+trace-tests verify --record path/to/trust-record.jwt --level 1
 ```
 
-## TRACE Certification
+## Test structure
 
-Tools that pass the full conformance suite can apply for TRACE Certification. See [CERTIFICATION.md](CERTIFICATION.md) for process and fee schedule (Q2 2027).
+Each test case includes:
+- A normative reference to the spec section it exercises
+- A **positive case** — valid input, expected result: `PASS`
+- A **negative case** — invalid input, expected result: `FAIL` with a structured error code
+
+Error codes follow the form `TR-<MODULE>-<NNN>` (e.g., `TR-ENV-001`: missing `eat_profile`).
 
 ## Status
 
-Private. Test suite in development. Certification program launching Q2 2027.
+Test suite v0.1 — in development. Targeting initial release alongside the TRACE spec at Confidential Computing Summit, June 23 2026. Certification program launching 2027.
+
+## Contributing
+
+Open an issue or PR. New tests must include the normative spec reference, a positive case, and a negative case.
 
 ## License
 
