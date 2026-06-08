@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentrust.io/schema/trace-v0.1.json",
+  "title": "TRACE Trust Record",
+  "description": "A TRACE v0.1 Trust Record — hardware-attested governance evidence for an AI agent execution.",
+  "type": "object",
+  "required": [
+    "eat_profile", "iat", "subject", "model", "runtime", "policy",
+    "data_class", "build_provenance", "appraisal", "transparency", "cnf"
+  ],
+  "properties": {
+    "eat_profile": {"type": "string", "const": "tag:agentrust.io,2026:trace-v0.1"},
+    "iat": {"type": "integer", "minimum": 1700000000},
+    "subject": {"type": "string", "pattern": "^spiffe://"},
+    "model": {
+      "type": "object",
+      "required": ["provider", "model_id"],
+      "properties": {
+        "provider": {"type": "string"},
+        "model_id": {"type": "string"},
+        "version": {"type": "string"},
+        "weights_digest": {"type": "string", "pattern": "^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})$"},
+        "aibom_uri": {"type": "string", "format": "uri"}
+      },
+      "additionalProperties": false
+    },
+    "runtime": {
+      "type": "object",
+      "required": ["platform", "measurement"],
+      "properties": {
+        "platform": {"type": "string", "enum": ["intel-tdx", "amd-sev-snp", "nvidia-h100", "nvidia-blackwell", "aws-nitro", "arm-cca", "google-confidential-space", "tpm2"]},
+        "measurement": {"type": "string", "pattern": "^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})$"},
+        "rim_uri": {"type": "string", "format": "uri"},
+        "nonce": {"type": "string"},
+        "firmware_version": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "required": ["bundle_hash", "enforcement_mode"],
+      "properties": {
+        "bundle_hash": {"type": "string", "pattern": "^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})$"},
+        "enforcement_mode": {"type": "string", "enum": ["enforce", "advisory", "silent"]},
+        "version": {"type": "string"},
+        "policy_uri": {"type": "string", "format": "uri"}
+      },
+      "additionalProperties": false
+    },
+    "data_class": {"type": "string"},
+    "tool_transcript": {
+      "type": "object",
+      "required": ["hash"],
+      "properties": {
+        "hash": {"type": "string", "pattern": "^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})$"},
+        "call_count": {"type": "integer", "minimum": 0},
+        "transcript_uri": {"type": "string", "format": "uri"}
+      },
+      "additionalProperties": false
+    },
+    "build_provenance": {
+      "type": "object",
+      "required": ["slsa_level", "digest"],
+      "properties": {
+        "slsa_level": {"type": "integer", "minimum": 1, "maximum": 3},
+        "builder": {"type": "string"},
+        "digest": {"type": "string", "pattern": "^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})$"},
+        "provenance_uri": {"type": "string", "format": "uri"}
+      },
+      "additionalProperties": false
+    },
+    "appraisal": {
+      "type": "object",
+      "required": ["status", "verifier"],
+      "properties": {
+        "status": {"type": "string", "enum": ["affirming", "warning", "contraindicated", "none"]},
+        "verifier": {"type": "string", "format": "uri"},
+        "policy_ref": {"type": "string", "format": "uri"},
+        "timestamp": {"type": "integer"}
+      },
+      "additionalProperties": false
+    },
+    "transparency": {"type": "string", "format": "uri"},
+    "cnf": {
+      "type": "object",
+      "required": ["jwk"],
+      "properties": {
+        "jwk": {
+          "type": "object",
+          "required": ["kty"],
+          "properties": {
+            "kty": {"type": "string"},
+            "crv": {"type": "string"},
+            "x": {"type": "string"},
+            "y": {"type": "string"},
+            "kid": {"type": "string"}
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "trace-tests"
+version = "0.1.0"
+description = "TRACE conformance test suite"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.11"
+dependencies = [
+    "pytest>=8.0",
+    "jsonschema>=4.23",
+]
+
+[project.optional-dependencies]
+dev = ["trace-tests[test]"]
+test = ["pytest>=8.0", "jsonschema>=4.23"]
+
+
+[tool.hatch.build.targets.wheel]
+packages = ["tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "level0: Level 0 conformance — structural and schema validity",
+    "level1: Level 1 conformance — signed EAT envelope present",
+    "level2: Level 2 conformance — hardware TEE attestation binding",
+    "negative: Negative tests — invalid records must be rejected",
+]
