@@ -1,6 +1,12 @@
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![TRACE Spec](https://img.shields.io/badge/TRACE-Spec_v0.1-0ea5e9)](https://github.com/agentrust-io/trace-spec)
+[![Tests](https://img.shields.io/badge/Conformance_Tests-7_modules-green)]()
+
 # TRACE Conformance Test Suite
 
-Conformance tests for TRACE v0.1 — Trust, Runtime Attestation, and Compliance Evidence. An implementation producing Trust Records must pass all tests in the applicable level before using the "TRACE-conformant" mark.
+Conformance tests for TRACE v0.1 - Trust, Runtime Attestation, and Compliance Evidence. An implementation producing Trust Records must pass all tests in the applicable level before using the "TRACE-conformant" mark.
+
+If you are building a gateway, agent runtime, or orchestration layer that produces TRACE records, run this suite against your output to verify conformance before claiming TRACE compliance.
 
 ## Test modules
 
@@ -33,14 +39,14 @@ trace-tests verify --record path/to/trust-record.jwt --level 1
 
 Each test case includes:
 - A normative reference to the spec section it exercises
-- A **positive case** — valid input, expected result: `PASS`
-- A **negative case** — invalid input, expected result: `FAIL` with a structured error code
+- A **positive case** - valid input, expected result: `PASS`
+- A **negative case** - invalid input, expected result: `FAIL` with a structured error code
 
 Error codes follow the form `TR-<MODULE>-<NNN>` (e.g., `TR-ENV-001`: missing `eat_profile`).
 
 ## Status
 
-Test suite v0.1 — in development. Targeting initial release alongside the TRACE spec at Confidential Computing Summit, June 23 2026. Certification program launching 2027.
+Test suite v0.1, in development. The TRACE spec publishes at Confidential Computing Summit, June 23 2026, and the test suite will be usable at that point. The certification program is on a separate timeline, launching 2027.
 
 ## Contributing
 
