@@ -10,23 +10,40 @@ readme = "README.md"
 license = { text = "Apache-2.0" }
 requires-python = ">=3.11"
 dependencies = [
-    "pytest>=8.0",
+    "click>=8.1",
+    "cryptography>=42",
     "jsonschema>=4.23",
 ]
 
-[project.optional-dependencies]
-dev = ["trace-tests[test]"]
-test = ["pytest>=8.0", "jsonschema>=4.23"]
+[project.urls]
+Homepage = "https://github.com/agentrust-io/trace-tests"
+Documentation = "https://github.com/agentrust-io/trace-tests#readme"
 
+[project.scripts]
+trace-tests = "trace_tests.cli:main"
+
+[project.optional-dependencies]
+dev = ["trace-tests[test]", "ruff", "mypy", "bandit", "pip-audit"]
+test = ["pytest>=8.0", "pytest-cov"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["tests"]
+packages = ["src/trace_tests"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = [
-    "level0: Level 0 conformance — structural and schema validity",
-    "level1: Level 1 conformance — signed EAT envelope present",
-    "level2: Level 2 conformance — hardware TEE attestation binding",
-    "negative: Negative tests — invalid records must be rejected",
+    "level0: Level 0 conformance -- structural and schema validity",
+    "level1: Level 1 conformance -- signed EAT envelope present",
+    "level2: Level 2 conformance -- hardware TEE attestation binding",
+    "negative: Negative tests -- invalid records must be rejected",
 ]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
