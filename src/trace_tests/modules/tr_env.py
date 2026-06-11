@@ -10,9 +10,16 @@ from trace_tests.result import Finding, Status
 _PROFILE = "tag:agentrust.io,2026:trace-v0.1"
 _IAT_MIN = 1_700_000_000
 
+#: Default maximum record age (seconds). Records older than this fail freshness.
+DEFAULT_MAX_AGE_SECONDS = 24 * 60 * 60
 
-def check(trace: dict[str, Any]) -> list[Finding]:
-    """Return findings for the EAT envelope structure."""
+
+def check(trace: dict[str, Any], max_age_seconds: int = DEFAULT_MAX_AGE_SECONDS) -> list[Finding]:
+    """Return findings for the EAT envelope structure.
+
+    *max_age_seconds* bounds how old ``iat`` may be; without an upper bound any
+    historical record would pass freshness forever and be trivially replayable.
+    """
     findings: list[Finding] = []
 
     profile = trace.get("eat_profile")
@@ -24,10 +31,16 @@ def check(trace: dict[str, Any]) -> list[Finding]:
     iat = trace.get("iat")
     if isinstance(iat, int) and iat >= _IAT_MIN:
         now = int(time.time())
-        if iat <= now + 60:
-            findings.append(Finding("TR-ENV-002", Status.PASS, f"iat is valid ({iat})"))
-        else:
+        if iat > now + 60:
             findings.append(Finding("TR-ENV-002", Status.FAIL, f"iat {iat} is in the future (now={now})"))
+        elif now - iat > max_age_seconds:
+            findings.append(Finding(
+                "TR-ENV-002", Status.FAIL,
+                f"TR-ENV-002: record is stale: iat {iat} is {now - iat}s old, "
+                f"exceeding the maximum allowed age of {max_age_seconds}s",
+            ))
+        else:
+            findings.append(Finding("TR-ENV-002", Status.PASS, f"iat is valid and fresh ({iat})"))
     else:
         findings.append(Finding("TR-ENV-002", Status.FAIL, f"iat must be a Unix timestamp >= {_IAT_MIN}, got {iat!r}"))
 

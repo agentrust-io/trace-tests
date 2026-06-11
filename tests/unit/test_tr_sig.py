@@ -75,15 +75,27 @@ def test_missing_signature_fails():
     assert any(f.failed() for f in findings)
 
 
-def test_trace_format_with_valid_kty_passes_and_skips():
+def test_trace_format_level0_is_unverified_never_pass_only():
     trace = {
         "cnf": {"jwk": {"kty": "EC", "crv": "P-256", "x": "test", "y": "test"}},
     }
-    findings = check(trace, trace, "trace")
+    findings = check(trace, trace, "trace", level=0)
     statuses = {f.status for f in findings}
-    assert Status.PASS in statuses
-    assert Status.SKIP in statuses
+    assert Status.UNVERIFIED in statuses, "plain trace records must be marked UNVERIFIED"
+    assert Status.SKIP not in statuses, "missing crypto must not be reported as a benign skip"
     assert Status.FAIL not in statuses
+
+
+@pytest.mark.parametrize("level", [1, 2])
+def test_trace_format_fails_at_signature_requiring_levels(level):
+    trace = {
+        "cnf": {"jwk": {"kty": "EC", "crv": "P-256", "x": "test", "y": "test"}},
+    }
+    findings = check(trace, trace, "trace", level=level)
+    failed = [f for f in findings if f.failed()]
+    assert any("TR-SIG-005" in f.code for f in failed), (
+        f"plain trace record must FAIL TR-SIG at level {level}: {findings}"
+    )
 
 
 def test_trace_format_missing_kty_fails():

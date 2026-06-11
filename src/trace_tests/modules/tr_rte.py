@@ -49,8 +49,8 @@ def check(trace: dict[str, Any]) -> list[Finding]:
     rim_uri = runtime.get("rim_uri")
     if rim_uri is None:
         findings.append(Finding("TR-RTE-003", Status.SKIP, "runtime.rim_uri not present (optional)"))
-    elif isinstance(rim_uri, str) and rim_uri.startswith(("https://", "http://")):
-        findings.append(Finding("TR-RTE-003", Status.PASS, f"runtime.rim_uri is a URI ({rim_uri[:60]})"))
+    elif isinstance(rim_uri, str) and rim_uri.startswith("https://"):
+        findings.append(Finding("TR-RTE-003", Status.PASS, f"runtime.rim_uri is an https URI ({rim_uri[:60]})"))
     else:
         findings.append(Finding("TR-RTE-003", Status.FAIL, f"TR-RTE-003: runtime.rim_uri must be an https URI, got {rim_uri!r}"))
 

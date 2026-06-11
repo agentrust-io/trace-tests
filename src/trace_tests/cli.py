@@ -9,12 +9,13 @@ import click
 
 from trace_tests import __version__
 from trace_tests.loader import LoadError, load_record
+from trace_tests.modules.tr_env import DEFAULT_MAX_AGE_SECONDS
 from trace_tests.result import Status
 from trace_tests.runner import run
 
 
 def _fmt_status(status: Status) -> str:
-    return status.value.upper().ljust(4)
+    return status.value.upper().ljust(10)
 
 
 def _print_report(path: str, fmt: str, level: int, results: dict[str, list[Any]]) -> int:
@@ -27,6 +28,7 @@ def _print_report(path: str, fmt: str, level: int, results: dict[str, list[Any]]
     failures = 0
     skips = 0
     passes = 0
+    unverified = 0
 
     for module, findings in results.items():
         for f in findings:
@@ -36,13 +38,26 @@ def _print_report(path: str, fmt: str, level: int, results: dict[str, list[Any]]
                 failures += 1
             elif f.passed():
                 passes += 1
+            elif f.unverified():
+                unverified += 1
             else:
                 skips += 1
 
-    total = passes + failures + skips
+    # Defense in depth: unverified findings must fail the run at any level that
+    # requires signatures, even if a module forgot to emit a hard FAIL.
+    if unverified and level >= 1:
+        failures += unverified
+
+    total = passes + failures + skips + (unverified if level == 0 else 0)
     click.echo("")
     if failures == 0:
-        click.echo(f"Result: PASS  ({total} checks, {skips} skipped)")
+        if unverified:
+            click.echo(
+                f"Result: PASS  ({total} checks, {skips} skipped, {unverified} UNVERIFIED "
+                f"-- record is NOT cryptographically verified)"
+            )
+        else:
+            click.echo(f"Result: PASS  ({total} checks, {skips} skipped)")
         return 0
     else:
         click.echo(f"Result: FAIL  ({total} checks, {failures} failure(s), {skips} skipped)")
@@ -58,7 +73,15 @@ def main() -> None:
 @main.command()
 @click.option("--record", required=True, type=click.Path(), help="Path to the trust record (JSON)")
 @click.option("--level", default=0, type=click.IntRange(0, 2), show_default=True, help="Conformance level to check (0, 1, or 2)")
-def verify(record: str, level: int) -> None:
+@click.option(
+    "--max-age",
+    "max_age",
+    default=DEFAULT_MAX_AGE_SECONDS,
+    type=click.IntRange(min=1),
+    show_default=True,
+    help="Maximum allowed record age in seconds (iat freshness window)",
+)
+def verify(record: str, level: int, max_age: int) -> None:
     """Verify a TRACE trust record against the conformance suite."""
     try:
         data, fmt = load_record(record)
@@ -66,7 +89,7 @@ def verify(record: str, level: int) -> None:
         click.echo(f"Error: {exc}", err=True)
         sys.exit(2)
 
-    results = run(data, fmt, level)
+    results = run(data, fmt, level, max_age_seconds=max_age)
     exit_code = _print_report(record, fmt, level, results)
     sys.exit(exit_code)
 

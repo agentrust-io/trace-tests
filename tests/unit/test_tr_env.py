@@ -7,7 +7,7 @@ from trace_tests.result import Status
 
 _VALID = {
     "eat_profile": "tag:agentrust.io,2026:trace-v0.1",
-    "iat": 1748000000,
+    "iat": int(time.time()) - 600,  # fresh: 10 minutes old
     "subject": "spiffe://example.org/agent/test",
     "cnf": {"jwk": {"kty": "OKP", "crv": "Ed25519", "x": "dGVzdA"}},
 }
@@ -40,6 +40,24 @@ def test_iat_in_future_fails():
     trace = {**_VALID, "iat": int(time.time()) + 3600}
     codes = {f.code for f in check(trace) if f.failed()}
     assert "TR-ENV-002" in codes
+
+
+def test_iat_older_than_default_max_age_fails():
+    trace = {**_VALID, "iat": int(time.time()) - (25 * 3600)}  # 25 hours old
+    failed = [f for f in check(trace) if f.failed()]
+    assert any(f.code == "TR-ENV-002" and "stale" in f.message for f in failed), failed
+
+
+def test_iat_within_custom_max_age_passes():
+    trace = {**_VALID, "iat": int(time.time()) - (25 * 3600)}
+    findings = check(trace, max_age_seconds=48 * 3600)
+    assert all(f.passed() for f in findings), [f for f in findings if not f.passed()]
+
+
+def test_iat_beyond_custom_max_age_fails():
+    trace = {**_VALID, "iat": int(time.time()) - 7200}  # 2 hours old
+    failed = [f for f in check(trace, max_age_seconds=3600) if f.failed()]
+    assert any(f.code == "TR-ENV-002" for f in failed)
 
 
 def test_non_spiffe_subject_fails():

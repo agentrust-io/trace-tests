@@ -16,7 +16,12 @@ _LEVEL_MODULES: dict[int, list[str]] = {
 }
 
 
-def run(record: dict[str, Any], fmt: str, level: int) -> dict[str, list[Finding]]:
+def run(
+    record: dict[str, Any],
+    fmt: str,
+    level: int,
+    max_age_seconds: int = tr_env.DEFAULT_MAX_AGE_SECONDS,
+) -> dict[str, list[Finding]]:
     """Run all modules required for *level* and return findings keyed by module ID."""
     if level not in _LEVEL_MODULES:
         raise ValueError(f"Unknown conformance level {level!r}; valid: 0, 1, 2")
@@ -27,10 +32,10 @@ def run(record: dict[str, Any], fmt: str, level: int) -> dict[str, list[Finding]
     active = set(_LEVEL_MODULES[level])
 
     if "TR-ENV" in active:
-        results["TR-ENV"] = tr_env.check(trace)
+        results["TR-ENV"] = tr_env.check(trace, max_age_seconds=max_age_seconds)
 
     if "TR-SIG" in active:
-        results["TR-SIG"] = tr_sig.check(trace, record, fmt)
+        results["TR-SIG"] = tr_sig.check(trace, record, fmt, level)
 
     if "TR-POL" in active:
         results["TR-POL"] = tr_pol.check(trace)
