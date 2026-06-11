@@ -56,3 +56,9 @@ def test_invalid_rim_uri_fails():
     trace = {"runtime": {**_VALID["runtime"], "rim_uri": "ftp://bad"}}
     codes = {f.code for f in check(trace) if f.failed()}
     assert "TR-RTE-003" in codes
+
+
+def test_http_rim_uri_fails():
+    trace = {"runtime": {**_VALID["runtime"], "rim_uri": "http://example.org/rim/tdx-v1"}}
+    codes = {f.code for f in check(trace) if f.failed()}
+    assert "TR-RTE-003" in codes, "plain http rim_uri must be rejected; https only"

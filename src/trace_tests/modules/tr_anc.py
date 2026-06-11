@@ -21,7 +21,7 @@ def check(trace: dict[str, Any]) -> list[Finding]:
 
     try:
         parsed = urlparse(transparency)
-        if parsed.scheme in ("https", "http") and parsed.netloc:
+        if parsed.scheme == "https" and parsed.netloc:
             findings.append(Finding("TR-ANC-001", Status.PASS, f"transparency is a valid URI ({transparency[:80]})"))
         else:
             findings.append(Finding(

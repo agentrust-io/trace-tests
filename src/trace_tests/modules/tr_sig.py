@@ -3,8 +3,10 @@
 For cmcp-runtime records: Ed25519 over canonical JSON (sorted keys, no whitespace,
 excluding the ``signature`` field). Key is in ``trace.cnf.jwk``.
 
-For plain trace records: checks key type and algorithm alignment. Full JWS/COSE
-verification is not yet implemented for this format.
+For plain trace records no signature can be cryptographically verified, so TR-SIG
+fails closed: at any level that requires signatures (level >= 1) the result is FAIL;
+at level 0 the result is an explicit UNVERIFIED finding so the record can never be
+reported as cryptographically verified.
 """
 
 from __future__ import annotations
@@ -84,28 +86,45 @@ def check_cmcp_runtime(record: dict[str, Any]) -> list[Finding]:
     return findings
 
 
-def check(trace: dict[str, Any], record: dict[str, Any], fmt: str) -> list[Finding]:
-    """Return TR-SIG findings. *record* is the full raw dict, *trace* is the extracted TRACE fields."""
+def check(trace: dict[str, Any], record: dict[str, Any], fmt: str, level: int = 0) -> list[Finding]:
+    """Return TR-SIG findings. *record* is the full raw dict, *trace* is the extracted TRACE fields.
+
+    *level* is the conformance level being checked. Plain trace records carry no
+    verifiable signature, so they FAIL at level >= 1 and are reported UNVERIFIED
+    (never PASS) at level 0.
+    """
     if fmt == "cmcp-runtime":
         return check_cmcp_runtime(record)
 
-    # Plain trace format: verify key type alignment only; JWS/COSE verification not yet implemented.
+    # Plain trace format: no signature can be cryptographically verified.
+    findings: list[Finding] = []
     jwk = trace.get("cnf", {}).get("jwk", {})
     kty = jwk.get("kty")
     crv = jwk.get("crv")
 
     if kty in _SUPPORTED_KTY:
         label = f"kty={kty!r}" + (f", crv={crv!r}" if crv else "")
-        return [
-            Finding("TR-SIG-004", Status.PASS, f"cnf.jwk key type is supported ({label})"),
-            Finding(
-                "TR-SIG-005",
-                Status.SKIP,
-                "Full JWS/COSE signature verification requires a signed EAT token (not a plain JSON record)",
-            ),
-        ]
+        findings.append(Finding("TR-SIG-004", Status.PASS, f"cnf.jwk key type is supported ({label})"))
+    elif kty is None:
+        findings.append(Finding("TR-SIG-004", Status.FAIL, "TR-SIG-004: cnf.jwk.kty is missing"))
+    else:
+        findings.append(Finding(
+            "TR-SIG-004", Status.FAIL,
+            f"TR-SIG-004: unsupported key type {kty!r}; expected one of {sorted(_SUPPORTED_KTY)}",
+        ))
 
-    if kty is None:
-        return [Finding("TR-SIG-004", Status.FAIL, "TR-SIG-004: cnf.jwk.kty is missing")]
+    if level >= 1:
+        findings.append(Finding(
+            "TR-SIG-005",
+            Status.FAIL,
+            f"TR-SIG-005: plain trace records carry no verifiable signature; "
+            f"Level {level} requires cryptographic signature verification (use a signed envelope, e.g. cmcp-runtime)",
+        ))
+    else:
+        findings.append(Finding(
+            "TR-SIG-005",
+            Status.UNVERIFIED,
+            "TR-SIG-005: no signature present; this record is NOT cryptographically verified",
+        ))
 
-    return [Finding("TR-SIG-004", Status.FAIL, f"TR-SIG-004: unsupported key type {kty!r}; expected one of {sorted(_SUPPORTED_KTY)}")]
+    return findings

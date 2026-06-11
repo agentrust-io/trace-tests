@@ -10,6 +10,10 @@ class Status(StrEnum):
     PASS = "pass"
     FAIL = "fail"
     SKIP = "skip"
+    # No cryptographic verification was possible. Distinct from SKIP so callers
+    # can never mistake an unverified record for a benign omission. Treated as
+    # a failure at any conformance level that requires signatures (level >= 1).
+    UNVERIFIED = "unverified"
 
 
 @dataclass
@@ -26,3 +30,6 @@ class Finding:
 
     def skipped(self) -> bool:
         return self.status == Status.SKIP
+
+    def unverified(self) -> bool:
+        return self.status == Status.UNVERIFIED
