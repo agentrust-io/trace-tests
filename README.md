@@ -1,6 +1,7 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![TRACE Spec](https://img.shields.io/badge/TRACE-Spec_v0.1-0ea5e9)](https://github.com/agentrust-io/trace-spec)
 [![Tests](https://img.shields.io/badge/Conformance_Tests-7_modules-green)]()
+[![Discord](https://dcbadge.limes.pink/api/server/9JWNpH7E?style=flat)](https://discord.gg/9JWNpH7E)
 
 # TRACE Conformance Test Suite
 
@@ -51,6 +52,8 @@ Test suite v0.1, in development. The TRACE spec publishes at Confidential Comput
 ## Contributing
 
 Open an issue or PR. New tests must include the normative spec reference, a positive case, and a negative case.
+
+Join the community on [Discord](https://discord.gg/9JWNpH7E).
 
 ## License
 
