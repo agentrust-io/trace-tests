@@ -41,7 +41,7 @@ def run(
         results["TR-POL"] = tr_pol.check(trace)
 
     if "TR-RTE" in active:
-        results["TR-RTE"] = tr_rte.check(trace)
+        results["TR-RTE"] = tr_rte.check(trace, level)
 
     if "TR-SCA" in active:
         results["TR-SCA"] = tr_sca.check(trace)
