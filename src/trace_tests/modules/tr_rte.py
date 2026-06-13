@@ -17,11 +17,19 @@ _VALID_PLATFORMS = frozenset({
     "arm-cca",
     "google-confidential-space",
     "tpm2",
+    "software-only",
 })
+# Platforms that provide no hardware attestation evidence. Valid only at Level 0.
+_DEV_PLATFORMS = frozenset({"software-only"})
 
 
-def check(trace: dict[str, Any]) -> list[Finding]:
-    """Return TR-RTE findings for the runtime / TEE platform claim."""
+def check(trace: dict[str, Any], level: int = 0) -> list[Finding]:
+    """Return TR-RTE findings for the runtime / TEE platform claim.
+
+    *level* is the conformance level being checked. Development-mode platforms
+    (e.g. ``software-only``) are accepted at Level 0 but rejected at Level 1+
+    because they carry no hardware attestation evidence.
+    """
     findings: list[Finding] = []
     runtime = trace.get("runtime")
 
@@ -29,7 +37,16 @@ def check(trace: dict[str, Any]) -> list[Finding]:
         return [Finding("TR-RTE-001", Status.FAIL, "TR-RTE-001: runtime field is missing or not an object")]
 
     platform = runtime.get("platform")
-    if platform in _VALID_PLATFORMS:
+    if platform in _DEV_PLATFORMS:
+        if level == 0:
+            findings.append(Finding("TR-RTE-001", Status.PASS, f"runtime.platform is registered ({platform!r})"))
+        else:
+            findings.append(Finding(
+                "TR-RTE-001", Status.FAIL,
+                f"TR-RTE-001: runtime.platform {platform!r} is development-mode and not acceptable for "
+                f"hardware-attested levels (Level {level} requires a hardware TEE platform)",
+            ))
+    elif platform in _VALID_PLATFORMS:
         findings.append(Finding("TR-RTE-001", Status.PASS, f"runtime.platform is registered ({platform!r})"))
     else:
         findings.append(Finding(

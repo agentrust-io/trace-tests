@@ -28,7 +28,7 @@
       "type": "object",
       "required": ["platform", "measurement"],
       "properties": {
-        "platform": {"type": "string", "enum": ["intel-tdx", "amd-sev-snp", "nvidia-h100", "nvidia-blackwell", "aws-nitro", "arm-cca", "google-confidential-space", "tpm2"]},
+        "platform": {"type": "string", "enum": ["intel-tdx", "amd-sev-snp", "nvidia-h100", "nvidia-blackwell", "aws-nitro", "arm-cca", "google-confidential-space", "tpm2", "software-only"]},
         "measurement": {"type": "string", "pattern": "^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})$"},
         "rim_uri": {"type": "string", "format": "uri"},
         "nonce": {"type": "string"},
