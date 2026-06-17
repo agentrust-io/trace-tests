@@ -1,11 +1,11 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![TRACE Spec](https://img.shields.io/badge/TRACE-Spec_v0.1-0ea5e9)](https://github.com/agentrust-io/trace-spec)
+[![TRACE Spec](https://img.shields.io/badge/TRACE-Spec_v0.2-0ea5e9)](https://github.com/agentrust-io/trace-spec)
 [![Tests](https://img.shields.io/badge/Conformance_Tests-7_modules-green)]()
 [![Discord](https://dcbadge.limes.pink/api/server/9JWNpH7E?style=flat)](https://discord.gg/9JWNpH7E)
 
 # TRACE Conformance Test Suite
 
-Conformance tests for TRACE v0.1 - Trust, Runtime Attestation, and Compliance Evidence. An implementation producing Trust Records must pass all tests in the applicable level before using the "TRACE-conformant" mark.
+Conformance tests for TRACE v0.2 - Trust, Runtime Attestation, and Compliance Evidence. An implementation producing Trust Records must pass all tests in the applicable level before using the "TRACE-conformant" mark.
 
 If you are building a gateway, agent runtime, or orchestration layer that produces TRACE records, run this suite against your output to verify conformance before claiming TRACE compliance.
 
@@ -45,9 +45,16 @@ Each test case includes:
 
 Error codes follow the form `TR-<MODULE>-<NNN>` (e.g., `TR-ENV-001`: missing `eat_profile`).
 
+## What changed in v0.2
+
+- **DID subject support**: `subject` now accepts `did:` URIs in addition to `spiffe://`. TR-ENV-003 passes for both.
+- **Embedded signature verification**: plain TRACE records signed with `agentrust-trace sign_record()` (Ed25519 embedded `signature` field) are now cryptographically verified at all levels. Previously marked UNVERIFIED.
+- **SLSA Level 0**: `build_provenance.slsa_level: 0` is now valid (software-only / development records).
+- **Software-only platform**: `runtime.platform: "software-only"` accepted at Level 0.
+
 ## Status
 
-Test suite v0.1, in development. The TRACE spec publishes at Confidential Computing Summit, June 23 2026, and the test suite will be usable at that point. The certification program is on a separate timeline, launching 2027.
+Test suite v0.2. The TRACE spec published at Confidential Computing Summit, June 23 2026. The certification program is on a separate timeline, launching 2027.
 
 ## Contributing
 

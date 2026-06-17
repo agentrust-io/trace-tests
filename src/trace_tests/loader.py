@@ -44,7 +44,9 @@ def load_record(path: str) -> tuple[dict[str, Any], str]:
     # Envelope-only keys present without cmcp_version: this is a partial/stripped
     # cmcp envelope, not a canonical TRACE record. Reject rather than silently
     # downgrading to the weaker plain-trace verification path.
-    partial_markers = sorted(k for k in ("trace", "gateway", "signature") if k in data)
+    # Note: "signature" alone is allowed -- plain TRACE records may carry an
+    # embedded Ed25519 signature field (agentrust-trace sign_record() output).
+    partial_markers = sorted(k for k in ("trace", "gateway") if k in data)
     if partial_markers:
         raise LoadError(
             f"Record contains cmcp envelope field(s) {partial_markers} but no 'cmcp_version'; "
