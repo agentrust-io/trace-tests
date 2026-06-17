@@ -102,3 +102,52 @@ def test_trace_format_missing_kty_fails():
     trace = {"cnf": {"jwk": {}}}
     findings = check(trace, trace, "trace")
     assert any(f.failed() for f in findings)
+
+
+def test_plain_trace_embedded_ed25519_signature_passes():
+    """plain TRACE record signed with agentrust-trace sign_record() gets TR-SIG-005 PASS."""
+    priv = Ed25519PrivateKey.generate()
+    pub = priv.public_key()
+    x = _b64url(pub.public_bytes_raw())
+
+    trace: dict = {
+        "eat_profile": "tag:agentrust.io,2026:trace-v0.1",
+        "iat": 1748000000,
+        "subject": "did:mesh:spiffe://example.org/agent/test",
+        "runtime": {"platform": "software-only", "measurement": "sha256:" + "a" * 64},
+        "policy": {"bundle_hash": "sha256:" + "b" * 64, "enforcement_mode": "enforce"},
+        "data_class": "internal",
+        "cnf": {"jwk": {"kty": "OKP", "crv": "Ed25519", "x": x}},
+        "signature": "",
+    }
+    body = _canonical_json({k: v for k, v in trace.items() if k != "signature"})
+    trace["signature"] = _b64url(priv.sign(body))
+
+    findings = check(trace, trace, "trace")
+    sig_findings = [f for f in findings if f.code == "TR-SIG-005"]
+    assert sig_findings, "TR-SIG-005 finding expected"
+    assert all(f.passed() for f in sig_findings), sig_findings
+
+
+def test_plain_trace_tampered_embedded_signature_fails():
+    priv = Ed25519PrivateKey.generate()
+    pub = priv.public_key()
+    x = _b64url(pub.public_bytes_raw())
+
+    trace: dict = {
+        "eat_profile": "tag:agentrust.io,2026:trace-v0.1",
+        "iat": 1748000000,
+        "subject": "did:mesh:spiffe://example.org/agent/test",
+        "runtime": {"platform": "software-only", "measurement": "sha256:" + "a" * 64},
+        "policy": {"bundle_hash": "sha256:" + "b" * 64, "enforcement_mode": "enforce"},
+        "data_class": "internal",
+        "cnf": {"jwk": {"kty": "OKP", "crv": "Ed25519", "x": x}},
+        "signature": "",
+    }
+    body = _canonical_json({k: v for k, v in trace.items() if k != "signature"})
+    trace["signature"] = _b64url(priv.sign(body))
+    trace["iat"] = 1748000001  # tamper after signing
+
+    findings = check(trace, trace, "trace")
+    sig_findings = [f for f in findings if f.code == "TR-SIG-005"]
+    assert any(f.failed() for f in sig_findings), sig_findings

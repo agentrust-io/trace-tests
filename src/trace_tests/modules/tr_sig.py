@@ -89,14 +89,15 @@ def check_cmcp_runtime(record: dict[str, Any]) -> list[Finding]:
 def check(trace: dict[str, Any], record: dict[str, Any], fmt: str, level: int = 0) -> list[Finding]:
     """Return TR-SIG findings. *record* is the full raw dict, *trace* is the extracted TRACE fields.
 
-    *level* is the conformance level being checked. Plain trace records carry no
-    verifiable signature, so they FAIL at level >= 1 and are reported UNVERIFIED
-    (never PASS) at level 0.
+    *level* is the conformance level being checked.
+
+    Plain trace records with an embedded ``signature`` field are verified with Ed25519
+    (agentrust-trace ``sign_record()`` output). Plain trace records without a signature
+    field FAIL at level >= 1 and are UNVERIFIED at level 0.
     """
     if fmt == "cmcp-runtime":
         return check_cmcp_runtime(record)
 
-    # Plain trace format: no signature can be cryptographically verified.
     findings: list[Finding] = []
     jwk = trace.get("cnf", {}).get("jwk", {})
     kty = jwk.get("kty")
@@ -113,17 +114,25 @@ def check(trace: dict[str, Any], record: dict[str, Any], fmt: str, level: int = 
             f"TR-SIG-004: unsupported key type {kty!r}; expected one of {sorted(_SUPPORTED_KTY)}",
         ))
 
-    if level >= 1:
+    sig = trace.get("signature", "")
+    if sig and kty == "OKP" and crv == _ED25519_CRV and jwk.get("x"):
+        body = _canonical_json({k: v for k, v in trace.items() if k != "signature"})
+        ok, msg = _verify_ed25519(jwk["x"], sig, body)
+        status = Status.PASS if ok else Status.FAIL
+        findings.append(Finding("TR-SIG-005", status, msg))
+    elif sig:
         findings.append(Finding(
-            "TR-SIG-005",
-            Status.FAIL,
-            f"TR-SIG-005: plain trace records carry no verifiable signature; "
-            f"Level {level} requires cryptographic signature verification (use a signed envelope, e.g. cmcp-runtime)",
+            "TR-SIG-005", Status.FAIL,
+            "TR-SIG-005: signature field present but key type is not OKP/Ed25519 or cnf.jwk.x is missing",
+        ))
+    elif level >= 1:
+        findings.append(Finding(
+            "TR-SIG-005", Status.FAIL,
+            f"TR-SIG-005: no signature present; Level {level} requires cryptographic verification",
         ))
     else:
         findings.append(Finding(
-            "TR-SIG-005",
-            Status.UNVERIFIED,
+            "TR-SIG-005", Status.UNVERIFIED,
             "TR-SIG-005: no signature present; this record is NOT cryptographically verified",
         ))
 
