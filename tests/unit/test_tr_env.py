@@ -60,7 +60,19 @@ def test_iat_beyond_custom_max_age_fails():
     assert any(f.code == "TR-ENV-002" for f in failed)
 
 
-def test_non_spiffe_subject_fails():
+def test_did_subject_passes():
+    trace = {**_VALID, "subject": "did:key:z6MkhaXgBZDvotzL8oCYaXeFuJArwvX6mDMsKTJVjtN7R"}
+    findings = check(trace)
+    assert all(f.passed() for f in findings), [f for f in findings if not f.passed()]
+
+
+def test_did_mesh_subject_passes():
+    trace = {**_VALID, "subject": "did:mesh:spiffe://factory.example/agent/material-movement/dev"}
+    findings = check(trace)
+    assert all(f.passed() for f in findings), [f for f in findings if not f.passed()]
+
+
+def test_non_spiffe_non_did_subject_fails():
     trace = {**_VALID, "subject": "https://example.org/agent"}
     codes = {f.code for f in check(trace) if f.failed()}
     assert "TR-ENV-003" in codes

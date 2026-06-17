@@ -45,10 +45,10 @@ def check(trace: dict[str, Any], max_age_seconds: int = DEFAULT_MAX_AGE_SECONDS)
         findings.append(Finding("TR-ENV-002", Status.FAIL, f"iat must be a Unix timestamp >= {_IAT_MIN}, got {iat!r}"))
 
     subject = trace.get("subject", "")
-    if isinstance(subject, str) and subject.startswith("spiffe://"):
-        findings.append(Finding("TR-ENV-003", Status.PASS, "subject is a SPIFFE URI"))
+    if isinstance(subject, str) and subject.startswith(("spiffe://", "did:")):
+        findings.append(Finding("TR-ENV-003", Status.PASS, f"subject is a valid workload identity URI ({subject!r})"))
     else:
-        findings.append(Finding("TR-ENV-003", Status.FAIL, f"subject must start with 'spiffe://', got {subject!r}"))
+        findings.append(Finding("TR-ENV-003", Status.FAIL, f"subject must be a SPIFFE URI (spiffe://) or DID URI (did:), got {subject!r}"))
 
     cnf = trace.get("cnf")
     if isinstance(cnf, dict) and isinstance(cnf.get("jwk"), dict) and "kty" in cnf["jwk"]:

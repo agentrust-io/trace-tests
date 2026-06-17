@@ -2,7 +2,7 @@ import re
 import pytest
 import jsonschema
 
-SPIFFE_RE = re.compile(r"^spiffe://")
+SUBJECT_RE = re.compile(r"^(spiffe://|did:)")
 DIGEST_RE = re.compile(r"^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})$")
 VALID_PLATFORMS = {
     "intel-tdx", "amd-sev-snp", "nvidia-h100", "nvidia-blackwell",
@@ -24,8 +24,8 @@ class TestLevel0Conformance:
         assert isinstance(valid_level0["iat"], int)
         assert valid_level0["iat"] >= 1700000000
 
-    def test_subject_is_spiffe_uri(self, valid_level0):
-        assert SPIFFE_RE.match(valid_level0["subject"])
+    def test_subject_is_valid_workload_identity_uri(self, valid_level0):
+        assert SUBJECT_RE.match(valid_level0["subject"])
 
     def test_runtime_platform_is_registered(self, valid_level0):
         assert valid_level0["runtime"]["platform"] in VALID_PLATFORMS
