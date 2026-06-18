@@ -53,8 +53,11 @@ def test_stripping_cmcp_version_is_rejected_not_downgraded(tmp_path):
         load_record(_write(tmp_path, stripped))
 
 
-@pytest.mark.parametrize("leftover", ["trace", "gateway", "signature"])
+@pytest.mark.parametrize("leftover", ["trace", "gateway"])
 def test_partial_envelope_with_single_cmcp_key_is_rejected(tmp_path, leftover):
+    # "signature" is intentionally excluded: plain TRACE records may carry an
+    # embedded signature field (agentrust-trace sign_record() output), so the
+    # loader allows it. Only "trace" and "gateway" are unambiguous cmcp markers.
     record = {**VALID_TRACE, leftover: VALID_CMCP[leftover]}
     with pytest.raises(LoadError, match="partial cmcp-runtime envelope"):
         load_record(_write(tmp_path, record))
