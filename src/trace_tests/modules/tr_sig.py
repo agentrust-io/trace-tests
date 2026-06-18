@@ -102,6 +102,15 @@ def check(trace: dict[str, Any], record: dict[str, Any], fmt: str, level: int = 
     jwk = trace.get("cnf", {}).get("jwk", {})
     kty = jwk.get("kty")
     crv = jwk.get("crv")
+    x = jwk.get("x")
+
+    if "d" in jwk:
+        findings.append(Finding(
+            rule="TR-SIG-002",
+            status=Status.FAIL,
+            message="cnf.jwk must not contain private key material ('d' field present in JWK)",
+        ))
+        return findings
 
     if kty in _SUPPORTED_KTY:
         label = f"kty={kty!r}" + (f", crv={crv!r}" if crv else "")

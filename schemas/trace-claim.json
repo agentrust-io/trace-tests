@@ -11,7 +11,7 @@
   "properties": {
     "eat_profile": {"type": "string", "const": "tag:agentrust.io,2026:trace-v0.1"},
     "iat": {"type": "integer", "minimum": 1700000000},
-    "subject": {"type": "string", "pattern": "^spiffe://"},
+    "subject": {"type": "string", "pattern": "^(spiffe://|did:)"},
     "model": {
       "type": "object",
       "required": ["provider", "model_id"],
