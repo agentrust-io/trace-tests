@@ -1,0 +1,138 @@
+site_name: TRACE Tests
+site_description: Conformance test suite for TRACE — Trust Runtime Attestation and Compliance Evidence
+site_url: https://tests.agentrust-io.com
+repo_url: https://github.com/agentrust-io/trace-tests
+repo_name: agentrust-io/trace-tests
+edit_uri: edit/main/
+docs_dir: .
+copyright: "© 2026 AgentTrust — Apache 2.0"
+
+exclude_docs: |
+  .github/
+  node_modules/
+  src/
+  tests/
+  schemas/
+  LICENSE
+  NOTICE
+  ANTITRUST.md
+  ADOPTERS.md
+  MAINTAINERS.md
+  SECURITY.md
+  CHARTER.md
+  CODE_OF_CONDUCT.md
+  pyproject.toml
+
+theme:
+  name: material
+  font: false
+  palette:
+    - scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to light mode
+    - scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to dark mode
+  features:
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.top
+    - navigation.path
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search:
+      lang: en
+  - minify:
+      minify_html: true
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: google
+            show_source: false
+            show_root_heading: true
+            show_root_full_path: false
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            members_order: source
+            separate_signature: true
+            show_signature_annotations: true
+            unwrap_annotated: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      use_pygments: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - attr_list
+  - md_in_html
+  - tables
+  - footnotes
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/agentrust-io/trace-tests
+      name: trace-tests on GitHub
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/9JWNpH7E
+      name: Join the Discord
+  generator: false
+
+extra_css:
+  - docs/stylesheets/extra.css
+
+nav:
+  - Home: README.md
+  - Getting Started: docs/quickstart.md
+  - Test Modules:
+      - Overview: docs/modules.md
+      - Envelope (TR-ENV): docs/modules/tr-env.md
+      - Signature (TR-SIG): docs/modules/tr-sig.md
+      - Runtime (TR-RTE): docs/modules/tr-rte.md
+      - Policy (TR-POL): docs/modules/tr-pol.md
+      - Transcript (TR-TXN): docs/modules/tr-txn.md
+      - Transparency (TR-ANC): docs/modules/tr-anc.md
+      - Provenance (TR-SCA): docs/modules/tr-sca.md
+  - Conformance Levels: docs/levels.md
+  - Error Codes: docs/error-codes.md
+  - Project:
+      - Changelog: CHANGELOG.md
+      - Contributing: CONTRIBUTING.md

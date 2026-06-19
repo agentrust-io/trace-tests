@@ -1,0 +1,9 @@
+/* AgentTrust brand — matches trace-spec palette */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #0ea5e9;
+  --md-accent-fg-color: #38bdf8;
+}
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #0284c7;
+  --md-accent-fg-color: #0ea5e9;
+}
