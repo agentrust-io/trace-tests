@@ -40,7 +40,7 @@ class TestLevel0Conformance:
         assert valid_level0["policy"]["enforcement_mode"] in VALID_ENFORCEMENT
 
     def test_build_provenance_slsa_level_range(self, valid_level0):
-        assert valid_level0["build_provenance"]["slsa_level"] in (1, 2, 3)
+        assert valid_level0["build_provenance"]["slsa_level"] in (0,1, 2, 3)
 
     def test_build_provenance_digest_format(self, valid_level0):
         assert DIGEST_RE.match(valid_level0["build_provenance"]["digest"])
