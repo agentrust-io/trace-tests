@@ -122,6 +122,9 @@ extra_css:
 nav:
   - Home: README.md
   - Getting Started: docs/quickstart.md
+  - Tutorials:
+      - Writing conformance tests: docs/tutorials/writing-conformance-tests.md
+      - CI integration: docs/tutorials/ci-integration.md
   - Test Modules:
       - Overview: docs/modules.md
       - Envelope (TR-ENV): docs/modules/tr-env.md
