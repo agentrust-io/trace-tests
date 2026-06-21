@@ -26,13 +26,14 @@ All TRACE test failures emit a structured error code of the form `TR-<MODULE>-<N
 |------|-------------|
 | TR-RTE-001 | `runtime.platform` is not a recognised TEE enum value |
 | TR-RTE-002 | `runtime.measurement` is not a valid `sha256:` digest |
+| TR-RTE-003 | RIM URI present but does not resolve to a valid reference image |
 
 ## TR-POL — Policy
 
 | Code | Description |
 |------|-------------|
 | TR-POL-001 | `policy.bundle_hash` is not a valid `sha256:` digest |
-| TR-POL-002 | `policy.enforcement_mode` is not `enforce` or `monitor` |
+| TR-POL-002 | `policy.enforcement_mode` is not `enforce`, `advisory`, or `silent` |
 
 ## TR-TXN — Transcript
 

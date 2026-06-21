@@ -3,7 +3,7 @@
 ## Install
 
 ```bash
-pip install agentrust-trace-tests
+pip install trace-tests
 ```
 
 ## Run against a Trust Record
@@ -41,3 +41,12 @@ TR-RTE-001  FAIL  Runtime: TEE measurement missing (required at level 1)
 ```
 
 Error codes follow the form `TR-<MODULE>-<NNN>`.
+
+## Next steps
+
+| What | Where |
+|------|-------|
+| Understand what each test checks | [Test Modules](../modules.md) |
+| Look up a specific error code | [Error Codes](../error-codes.md) |
+| Write your own conformance tests | [Tutorial: Writing conformance tests](tutorials/writing-conformance-tests.md) |
+| Set up CI | [Tutorial: CI integration](tutorials/ci-integration.md) |
