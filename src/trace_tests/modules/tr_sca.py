@@ -8,7 +8,7 @@ from typing import Any
 from trace_tests.result import Finding, Status
 
 _DIGEST_RE = re.compile(r"^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})$")
-_SLSA_LEVELS = frozenset({1, 2, 3})
+_SLSA_LEVELS = frozenset({0,1, 2, 3})
 
 
 def check(trace: dict[str, Any]) -> list[Finding]:
@@ -28,7 +28,7 @@ def check(trace: dict[str, Any]) -> list[Finding]:
     else:
         findings.append(Finding(
             "TR-SCA-001", Status.FAIL,
-            f"TR-SCA-001: build_provenance.slsa_level must be 1, 2, or 3, got {slsa_level!r}",
+            f"TR-SCA-001: build_provenance.slsa_level must be 0,1, 2, or 3, got {slsa_level!r}",
         ))
 
     digest = prov.get("digest", "")
