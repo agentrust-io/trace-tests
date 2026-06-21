@@ -56,4 +56,12 @@
          <loc>https://tests.agentrust-io.com/docs/modules/tr-txn/</loc>
          <lastmod>2026-06-21</lastmod>
     </url>
+    <url>
+         <loc>https://tests.agentrust-io.com/docs/tutorials/ci-integration/</loc>
+         <lastmod>2026-06-21</lastmod>
+    </url>
+    <url>
+         <loc>https://tests.agentrust-io.com/docs/tutorials/writing-conformance-tests/</loc>
+         <lastmod>2026-06-21</lastmod>
+    </url>
 </urlset>
