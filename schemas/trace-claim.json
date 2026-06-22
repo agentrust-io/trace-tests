@@ -62,7 +62,7 @@
       "type": "object",
       "required": ["slsa_level", "digest"],
       "properties": {
-        "slsa_level": {"type": "integer", "minimum": 1, "maximum": 3},
+        "slsa_level": {"type": "integer", "minimum": 0, "maximum": 3},
         "builder": {"type": "string"},
         "digest": {"type": "string", "pattern": "^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})$"},
         "provenance_uri": {"type": "string", "format": "uri"}
