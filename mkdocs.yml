@@ -5,7 +5,7 @@ repo_url: https://github.com/agentrust-io/trace-tests
 repo_name: agentrust-io/trace-tests
 edit_uri: edit/main/
 docs_dir: .
-copyright: "© 2026 AgentTrust — Apache 2.0"
+copyright: "© 2026 AgenTrust — Apache 2.0"
 
 exclude_docs: |
   .github/
