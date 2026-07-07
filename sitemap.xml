@@ -2,66 +2,66 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://tests.agentrust-io.com/</loc>
-         <lastmod>2026-06-29</lastmod>
+         <lastmod>2026-07-07</lastmod>
     </url>
     <url>
          <loc>https://tests.agentrust-io.com/CHANGELOG/</loc>
-         <lastmod>2026-06-29</lastmod>
+         <lastmod>2026-07-07</lastmod>
     </url>
     <url>
          <loc>https://tests.agentrust-io.com/CONTRIBUTING/</loc>
-         <lastmod>2026-06-29</lastmod>
+         <lastmod>2026-07-07</lastmod>
     </url>
     <url>
          <loc>https://tests.agentrust-io.com/docs/error-codes/</loc>
-         <lastmod>2026-06-29</lastmod>
+         <lastmod>2026-07-07</lastmod>
     </url>
     <url>
          <loc>https://tests.agentrust-io.com/docs/levels/</loc>
-         <lastmod>2026-06-29</lastmod>
+         <lastmod>2026-07-07</lastmod>
     </url>
     <url>
          <loc>https://tests.agentrust-io.com/docs/modules/</loc>
-         <lastmod>2026-06-29</lastmod>
+         <lastmod>2026-07-07</lastmod>
     </url>
     <url>
          <loc>https://tests.agentrust-io.com/docs/quickstart/</loc>
-         <lastmod>2026-06-29</lastmod>
+         <lastmod>2026-07-07</lastmod>
     </url>
     <url>
          <loc>https://tests.agentrust-io.com/docs/modules/tr-anc/</loc>
-         <lastmod>2026-06-29</lastmod>
+         <lastmod>2026-07-07</lastmod>
     </url>
     <url>
          <loc>https://tests.agentrust-io.com/docs/modules/tr-env/</loc>
-         <lastmod>2026-06-29</lastmod>
+         <lastmod>2026-07-07</lastmod>
     </url>
     <url>
          <loc>https://tests.agentrust-io.com/docs/modules/tr-pol/</loc>
-         <lastmod>2026-06-29</lastmod>
+         <lastmod>2026-07-07</lastmod>
     </url>
     <url>
          <loc>https://tests.agentrust-io.com/docs/modules/tr-rte/</loc>
-         <lastmod>2026-06-29</lastmod>
+         <lastmod>2026-07-07</lastmod>
     </url>
     <url>
          <loc>https://tests.agentrust-io.com/docs/modules/tr-sca/</loc>
-         <lastmod>2026-06-29</lastmod>
+         <lastmod>2026-07-07</lastmod>
     </url>
     <url>
          <loc>https://tests.agentrust-io.com/docs/modules/tr-sig/</loc>
-         <lastmod>2026-06-29</lastmod>
+         <lastmod>2026-07-07</lastmod>
     </url>
     <url>
          <loc>https://tests.agentrust-io.com/docs/modules/tr-txn/</loc>
-         <lastmod>2026-06-29</lastmod>
+         <lastmod>2026-07-07</lastmod>
     </url>
     <url>
          <loc>https://tests.agentrust-io.com/docs/tutorials/ci-integration/</loc>
-         <lastmod>2026-06-29</lastmod>
+         <lastmod>2026-07-07</lastmod>
     </url>
     <url>
          <loc>https://tests.agentrust-io.com/docs/tutorials/writing-conformance-tests/</loc>
-         <lastmod>2026-06-29</lastmod>
+         <lastmod>2026-07-07</lastmod>
     </url>
 </urlset>
