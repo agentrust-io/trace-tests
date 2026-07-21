@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.3.0 — 2026-07-21
+
 - `azure-cvm-sev-snp` platform accepted (`runtime.platform`): Azure confidential VMs run SEV-SNP behind a Hyper-V paravisor (vTPM-rooted). Added to the bundled schema enum and the TR-RTE valid-platform set so Azure TRACE records pass conformance. Matches `agentrust-trace>=0.4`.
 
 ## v0.2.0 — 2026-06-19
