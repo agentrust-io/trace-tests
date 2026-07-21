@@ -17,6 +17,13 @@ def test_valid_runtime_passes():
     assert all(not f.failed() for f in findings), findings
 
 
+def test_azure_cvm_platform_passes():
+    """azure-cvm-sev-snp is a recognized hardware platform (vTPM-rooted SEV-SNP)."""
+    trace = {"runtime": {"platform": "azure-cvm-sev-snp", "measurement": "sha384:" + "a" * 96}}
+    findings = check(trace, level=2)
+    assert all(not f.failed() for f in findings), findings
+
+
 def test_invalid_platform_fails():
     trace = {"runtime": {**_VALID["runtime"], "platform": "unknown-tee"}}
     codes = {f.code for f in check(trace) if f.failed()}
