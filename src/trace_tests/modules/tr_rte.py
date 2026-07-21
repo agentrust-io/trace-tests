@@ -11,6 +11,8 @@ _DIGEST_RE = re.compile(r"^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})$")
 _VALID_PLATFORMS = frozenset({
     "intel-tdx",
     "amd-sev-snp",
+    # Azure confidential VM: SEV-SNP behind a Hyper-V paravisor (vTPM-rooted).
+    "azure-cvm-sev-snp",
     "nvidia-h100",
     "nvidia-blackwell",
     "aws-nitro",
