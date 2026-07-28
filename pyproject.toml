@@ -9,7 +9,7 @@ description = "TRACE conformance test suite"
 readme = "README.md"
 license = { text = "Apache-2.0" }
 authors = [
-    { name = "agentrust.io" },
+    { name = "agentrust-io.com" },
 ]
 keywords = ["trace", "conformance", "attestation", "ai-agents", "provenance"]
 classifiers = [

@@ -18,7 +18,7 @@ class TestLevel0Conformance:
         jsonschema.validate(valid_level0, schema)
 
     def test_eat_profile_sentinel(self, valid_level0):
-        assert valid_level0["eat_profile"] == "tag:agentrust.io,2026:trace-v0.1"
+        assert valid_level0["eat_profile"] == "tag:agentrust-io.com,2026:trace-v0.2"
 
     def test_iat_is_positive_integer(self, valid_level0):
         assert isinstance(valid_level0["iat"], int)

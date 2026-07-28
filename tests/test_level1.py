@@ -48,11 +48,11 @@ class TestLevel1Conformance:
 
         In the cMCP profile the eat_profile field inside trace serves the role
         of the COSE protected header content-type: it binds the record to the
-        TRACE v0.1 specification and prevents cross-profile replay.
+        TRACE v0.2 specification and prevents cross-profile replay.
         """
         trace = signed_eat_fixture["trace"]
-        assert trace.get("eat_profile") == "tag:agentrust.io,2026:trace-v0.1", (
-            "trace.eat_profile must be 'tag:agentrust.io,2026:trace-v0.1'"
+        assert trace.get("eat_profile") == "tag:agentrust-io.com,2026:trace-v0.2", (
+            "trace.eat_profile must be 'tag:agentrust-io.com,2026:trace-v0.2'"
         )
 
     def test_signature_verifies_against_cnf_key(self, signed_eat_fixture):

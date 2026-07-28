@@ -193,7 +193,7 @@ def build_signed_cmcp_record(platform: str = "tpm2") -> dict:
     record = {
         "cmcp_version": "1.0",
         "trace": {
-            "eat_profile": "tag:agentrust.io,2026:trace-v0.1",
+            "eat_profile": "tag:agentrust-io.com,2026:trace-v0.2",
             "iat": int(time.time()) - 30,
             "subject": "spiffe://cmcp.gateway/session/my-test",
             "runtime": {
@@ -228,7 +228,7 @@ Common codes you will encounter:
 
 | Code | Field | Fix |
 |------|-------|-----|
-| TR-ENV-001 | `eat_profile` | Must be `tag:agentrust.io,2026:trace-v0.1` |
+| TR-ENV-001 | `eat_profile` | Must be `tag:agentrust-io.com,2026:trace-v0.2` |
 | TR-ENV-002 | `iat` | Must be a Unix timestamp in the last 24 hours |
 | TR-SIG-001 | `signature` | Signature missing or does not verify |
 | TR-SIG-002 | `cnf.jwk` | Key must be OKP/Ed25519 |

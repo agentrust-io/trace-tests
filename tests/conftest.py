@@ -41,7 +41,7 @@ def _build_signed_cmcp_record(*, platform: str = "tpm2", nonce: str | None = Non
     iat = int(time.time()) - 30  # fresh but not future-dated
 
     trace: dict = {
-        "eat_profile": "tag:agentrust.io,2026:trace-v0.1",
+        "eat_profile": "tag:agentrust-io.com,2026:trace-v0.2",
         "iat": iat,
         "subject": "spiffe://cmcp.gateway/session/conformance-test",
         "runtime": {
@@ -135,7 +135,7 @@ def _build_software_only_record() -> dict:
     record: dict = {
         "cmcp_version": "1.0",
         "trace": {
-            "eat_profile": "tag:agentrust.io,2026:trace-v0.1",
+            "eat_profile": "tag:agentrust-io.com,2026:trace-v0.2",
             "iat": iat,
             "subject": "spiffe://cmcp.gateway/session/level2-test",
             "runtime": {
