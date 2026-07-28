@@ -1,7 +1,7 @@
 {
   "cmcp_version": "1.0",
   "trace": {
-    "eat_profile": "tag:agentrust.io,2026:trace-v0.1",
+    "eat_profile": "tag:agentrust-io.com,2026:trace-v0.2",
     "iat": 1748000000,
     "subject": "spiffe://cmcp.gateway/session/test-session-001",
     "runtime": {

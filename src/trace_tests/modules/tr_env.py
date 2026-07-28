@@ -8,7 +8,7 @@ from typing import Any
 
 from trace_tests.result import Finding, Status
 
-_PROFILE = "tag:agentrust.io,2026:trace-v0.1"
+_PROFILE = "tag:agentrust-io.com,2026:trace-v0.2"
 _SUBJECT_RE = re.compile(r'^(spiffe://[^/]+/.+|did:[a-z0-9]+:.+)$')
 _IAT_MIN = 1_700_000_000
 

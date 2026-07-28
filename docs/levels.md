@@ -16,7 +16,7 @@ Level 0 records are signed with a software key. The `runtime.platform` must be `
 
 ```json
 {
-  "eat_profile": "tag:agentrust.io,2026:trace-v0.1",
+  "eat_profile": "tag:agentrust-io.com,2026:trace-v0.2",
   "iat": 1750000000,
   "subject": "spiffe://trust.example.org/agent/my-agent",
   "model": {
@@ -41,7 +41,7 @@ Level 0 records are signed with a software key. The `runtime.platform` must be `
     "status": "none",
     "verifier": "https://verifier.example.org"
   },
-  "transparency": "https://registry.agentrust.io/claim/placeholder",
+  "transparency": "https://registry.agentrust-io.com/claim/placeholder",
   "cnf": {
     "jwk": {
       "kty": "OKP",
@@ -73,7 +73,7 @@ Level 1 adds hardware attestation. `runtime.platform` must be one of: `tpm2`, `s
 
 ```json
 {
-  "eat_profile": "tag:agentrust.io,2026:trace-v0.1",
+  "eat_profile": "tag:agentrust-io.com,2026:trace-v0.2",
   "iat": 1750000000,
   "subject": "spiffe://trust.example.org/agent/my-agent",
   "model": {
@@ -96,9 +96,9 @@ Level 1 adds hardware attestation. `runtime.platform` must be one of: `tpm2`, `s
   },
   "appraisal": {
     "status": "affirming",
-    "verifier": "https://verifier.agentrust.io"
+    "verifier": "https://verifier.agentrust-io.com"
   },
-  "transparency": "https://registry.agentrust.io/claim/placeholder",
+  "transparency": "https://registry.agentrust-io.com/claim/placeholder",
   "cnf": {
     "jwk": {
       "kty": "OKP",
@@ -133,9 +133,9 @@ Level 2 adds tool transcript and transparency anchor requirements. The `transpar
     "hash": "sha256:c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4",
     "call_count": 4
   },
-  "transparency": "https://registry.agentrust.io/claim/01J3XKWP4NQZ8R5HT6YD7VMBCE",
+  "transparency": "https://registry.agentrust-io.com/claim/01J3XKWP4NQZ8R5HT6YD7VMBCE",
   "anchor": {
-    "log_id": "https://registry.agentrust.io",
+    "log_id": "https://registry.agentrust-io.com",
     "leaf_hash": "sha256:f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5"
   }
 }

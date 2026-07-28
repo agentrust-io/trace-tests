@@ -1,5 +1,5 @@
 {
-  "eat_profile": "tag:agentrust.io,2026:trace-v0.1",
+  "eat_profile": "tag:agentrust-io.com,2026:trace-v0.2",
   "iat": 1748000000,
   "subject": "spiffe://example.org/agent/test/001",
   "model": {"provider": "anthropic", "model_id": "claude-sonnet-4-5"},

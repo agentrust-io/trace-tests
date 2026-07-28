@@ -1,5 +1,5 @@
 {
-  "eat_profile": "tag:agentrust.io,2026:trace-v0.1",
+  "eat_profile": "tag:agentrust-io.com,2026:trace-v0.2",
   "iat": 1748000001,
   "subject": "spiffe://example.org/agent/payments/01926b4c-1234-7abc-9def-000000000002",
   "model": {

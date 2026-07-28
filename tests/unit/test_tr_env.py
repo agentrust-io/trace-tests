@@ -6,7 +6,7 @@ from trace_tests.modules.tr_env import check
 from trace_tests.result import Status
 
 _VALID = {
-    "eat_profile": "tag:agentrust.io,2026:trace-v0.1",
+    "eat_profile": "tag:agentrust-io.com,2026:trace-v0.2",
     "iat": int(time.time()) - 600,  # fresh: 10 minutes old
     "subject": "spiffe://example.org/agent/test",
     "cnf": {"jwk": {"kty": "OKP", "crv": "Ed25519", "x": "dGVzdA"}},

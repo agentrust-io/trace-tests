@@ -28,7 +28,7 @@ def _make_signed_record() -> dict:
     record = {
         "cmcp_version": "1.0",
         "trace": {
-            "eat_profile": "tag:agentrust.io,2026:trace-v0.1",
+            "eat_profile": "tag:agentrust-io.com,2026:trace-v0.2",
             "iat": 1748000000,
             "subject": "spiffe://cmcp.gateway/session/unit-test",
             "runtime": {
@@ -111,7 +111,7 @@ def test_plain_trace_embedded_ed25519_signature_passes():
     x = _b64url(pub.public_bytes_raw())
 
     trace: dict = {
-        "eat_profile": "tag:agentrust.io,2026:trace-v0.1",
+        "eat_profile": "tag:agentrust-io.com,2026:trace-v0.2",
         "iat": 1748000000,
         "subject": "did:mesh:spiffe://example.org/agent/test",
         "runtime": {"platform": "software-only", "measurement": "sha256:" + "a" * 64},
@@ -135,7 +135,7 @@ def test_plain_trace_tampered_embedded_signature_fails():
     x = _b64url(pub.public_bytes_raw())
 
     trace: dict = {
-        "eat_profile": "tag:agentrust.io,2026:trace-v0.1",
+        "eat_profile": "tag:agentrust-io.com,2026:trace-v0.2",
         "iat": 1748000000,
         "subject": "did:mesh:spiffe://example.org/agent/test",
         "runtime": {"platform": "software-only", "measurement": "sha256:" + "a" * 64},

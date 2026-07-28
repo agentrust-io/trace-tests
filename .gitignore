@@ -4,3 +4,7 @@ __pycache__/
 dist/
 *.egg-info/
 .coverage
+
+# Local virtual environments
+.venv/
+venv/

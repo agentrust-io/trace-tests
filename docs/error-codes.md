@@ -6,7 +6,7 @@ All TRACE test failures emit a structured error code of the form `TR-<MODULE>-<N
 
 | Code | Description | How to fix |
 |------|-------------|------------|
-| TR-ENV-001 | Missing or invalid `eat_profile` URI | Set `eat_profile` to `"tag:agentrust.io,2026:trace-v0.1"` |
+| TR-ENV-001 | Missing or invalid `eat_profile` URI | Set `eat_profile` to `"tag:agentrust-io.com,2026:trace-v0.2"` |
 | TR-ENV-002 | `iat` is missing, not an integer, or out of range | Set `iat` to a Unix timestamp integer (e.g. `int(time.time())`) |
 | TR-ENV-003 | `subject` does not match SPIFFE URI or DID pattern | Use `spiffe://<trust-domain>/<path>` or a `did:` URI |
 | TR-ENV-004 | One or more required fields are absent | Add the missing field(s); check the [Schema Reference](https://trace.agentrust-io.com/schema) for the full required set |
@@ -47,7 +47,7 @@ All TRACE test failures emit a structured error code of the form `TR-<MODULE>-<N
 | Code | Description | How to fix |
 |------|-------------|------------|
 | TR-ANC-001 | `transparency` field missing or empty | Submit the record to a SCITT transparency log and set `transparency` to the returned receipt URI |
-| TR-ANC-002 | `transparency` URI does not use `https://` scheme | Only `https://` URIs are accepted; update the URI or use the agentrust registry at `https://registry.agentrust.io` |
+| TR-ANC-002 | `transparency` URI does not use `https://` scheme | Only `https://` URIs are accepted; update the URI or use the agentrust registry at `https://registry.agentrust-io.com` |
 
 ## TR-SCA — Provenance
 

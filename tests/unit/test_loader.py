@@ -13,13 +13,13 @@ from trace_tests.loader import LoadError, load_record
 
 VALID_CMCP = {
     "cmcp_version": "1.0",
-    "trace": {"eat_profile": "tag:agentrust.io,2026:trace-v0.1"},
+    "trace": {"eat_profile": "tag:agentrust-io.com,2026:trace-v0.2"},
     "gateway": {"session_id": "s1"},
     "signature": "sig",
 }
 
 VALID_TRACE = {
-    "eat_profile": "tag:agentrust.io,2026:trace-v0.1",
+    "eat_profile": "tag:agentrust-io.com,2026:trace-v0.2",
     "iat": 1748000000,
     "subject": "spiffe://example.org/agent/test",
 }
