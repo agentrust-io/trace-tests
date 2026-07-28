@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.4.0 — 2026-07-28
+
 ### Changed
 
 - **BREAKING: the suite now conforms to TRACE v0.2.** `TR-ENV` requires the profile `tag:agentrust-io.com,2026:trace-v0.2` and fails a record carrying the v0.1 identifier. The v0.1 URI named `agentrust.io`, a domain this project never controlled, which RFC 4151 does not permit for a tag URI; see agentrust-io/trace-spec#107. Nothing else about the record format changed, so a producer migrates by updating the profile string and bumping `agentrust-trace` to 0.5.0.
