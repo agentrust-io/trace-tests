@@ -27,7 +27,7 @@
 
 > **Test suite v0.2.** Tracks [TRACE Spec v0.2](https://github.com/agentrust-io/trace-spec).
 
-Conformance tests for TRACE — Trust Runtime Attestation and Compliance Evidence. Run this suite against your implementation to verify it meets the spec before claiming TRACE compliance.
+Conformance tests for TRACE (Trust Runtime Attestation and Compliance Evidence). Run this suite against your implementation to verify it meets the spec before claiming TRACE compliance.
 
 Seven test modules covering the full specification: envelope structure, signature algorithms, TEE runtime claims, policy binding, tool-call transcripts, SCITT transparency anchoring, and supply chain provenance.
 
