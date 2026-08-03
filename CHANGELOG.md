@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.4.1 — 2026-08-03
+
 ### Fixed
 
 - **`--version` reported the wrong version.** `__version__` was a second hardcoded literal alongside `pyproject.toml` and never moved, so it sat at `0.2.0` through both the 0.3.0 and 0.4.0 releases: `trace-tests --version` printed `0.2.0` from a 0.4.0 install while `importlib.metadata` correctly returned `0.4.0`. It is now read from installed distribution metadata, so there is one source of truth and the value cannot fall behind a release again.
