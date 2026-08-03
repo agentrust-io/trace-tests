@@ -57,3 +57,29 @@ def test_partial_cmcp_envelope_is_rejected(tmp_path):
     result = CliRunner().invoke(main, ["verify", "--record", str(p), "--level", "0"])
     assert result.exit_code == 2, result.output
     assert "partial cmcp-runtime envelope" in result.output
+
+
+def test_version_matches_distribution_metadata():
+    """`--version` must report the installed distribution version.
+
+    `__version__` was a second hardcoded literal alongside `pyproject.toml` and
+    fell behind through two releases, so a 0.4.0 install reported 0.2.0. Since
+    the v0.2 profile cutover shipped in 0.4.0, `--version` was the one command
+    that could not tell you whether your suite accepts v0.2 records.
+    """
+    from importlib.metadata import version
+
+    expected = version("agentrust-trace-tests")
+    result = CliRunner().invoke(main, ["--version"])
+
+    assert result.exit_code == 0, result.output
+    assert expected in result.output, f"expected {expected!r} in {result.output!r}"
+
+
+def test_dunder_version_is_not_a_stale_literal():
+    """Guard against reverting to a hardcoded `__version__`."""
+    from importlib.metadata import version
+
+    import trace_tests
+
+    assert trace_tests.__version__ == version("agentrust-trace-tests")
