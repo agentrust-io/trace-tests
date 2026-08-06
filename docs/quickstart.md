@@ -3,8 +3,11 @@
 ## Install
 
 ```bash
-pip install trace-tests
+pip install agentrust-trace-tests
 ```
+
+The distribution is `agentrust-trace-tests`; `trace-tests` is the command it
+installs. `pip install trace-tests` returns 404.
 
 ## Create a sample fixture
 
