@@ -34,7 +34,7 @@ Seven test modules covering the full specification: envelope structure, signatur
 ## Quick start
 
 ```bash
-pip install trace-tests
+pip install agentrust-trace-tests
 trace-tests verify --record path/to/trust-record.jwt --level 1
 ```
 
