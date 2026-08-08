@@ -25,6 +25,7 @@ exclude_docs: |
 
 theme:
   name: material
+  custom_dir: overrides
   font: false
   palette:
     - scheme: slate
@@ -59,6 +60,32 @@ theme:
 plugins:
   - search:
       lang: en
+  - llmstxt:
+      full_output: llms-full.txt
+      markdown_description: >-
+        TRACE Tests is the conformance suite for TRACE (Trust Runtime
+        Attestation and Compliance Evidence), the AgenTrust open standard for
+        signed, hardware-attested AI agent governance records. Use it to check
+        that your attestation receipts satisfy the specification, at each
+        conformance level, before shipping them to production.
+      sections:
+        Getting started:
+          - README.md
+          - docs/quickstart.md
+          - docs/levels.md
+        Test modules:
+          - docs/modules.md
+          - docs/modules/tr-env.md
+          - docs/modules/tr-sig.md
+          - docs/modules/tr-rte.md
+          - docs/modules/tr-pol.md
+          - docs/modules/tr-txn.md
+          - docs/modules/tr-anc.md
+          - docs/modules/tr-sca.md
+        Reference:
+          - docs/error-codes.md
+          - docs/tutorials/writing-conformance-tests.md
+          - docs/tutorials/ci-integration.md
   - minify:
       minify_html: true
   - mkdocstrings:

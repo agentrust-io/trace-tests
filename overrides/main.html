@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{#
+  SEO and AEO head additions for the TRACE conformance suite.
+
+  1. The homepage <title> is overridden. Material falls back to site_name when a
+     page has no front-matter title, which left the homepage titled "TRACE
+     Tests". Front matter is not an option: docs_dir is the repository root, so
+     README.md is also the GitHub landing page and YAML would render as noise
+     there.
+
+  2. Open Graph and Twitter meta, so links produce a card instead of a bare URL,
+     plus JSON-LD so answer engines can model what this suite is.
+
+  Asset paths derive from config.site_url. Do not hardcode them: assets are
+  served under /docs/assets/ here because docs_dir is the repository root and
+  CI copies docs/ into the build directory. That differs between sibling
+  repositories, and a hardcoded path is how cMCP shipped a broken card.
+#}
+
+{% block htmltitle %}
+  {% if page and page.is_homepage %}
+    <title>Verify your TRACE implementation - {{ config.site_name }}</title>
+  {% else %}
+    {{ super() }}
+  {% endif %}
+{% endblock %}
+
+{% block extrahead %}
+  {{ super() }}
+  {% set page_desc = page.meta.description if page and page.meta and page.meta.description else config.site_description %}
+  {% set page_url = page.canonical_url if page and page.canonical_url else config.site_url %}
+  {% set og_image = config.site_url ~ 'docs/assets/og.png' %}
+  {% set social_title = 'Verify your TRACE implementation' %}
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="{{ config.site_name }}">
+  <meta property="og:title" content="{% if page and page.title and not page.is_homepage %}{{ page.title }} - {{ config.site_name }}{% else %}{{ config.site_name }}: {{ social_title }}{% endif %}">
+  <meta property="og:description" content="{{ page_desc }}">
+  <meta property="og:url" content="{{ page_url }}">
+  <meta property="og:image" content="{{ og_image }}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="TRACE Tests: the AgenTrust conformance suite">
+  <meta property="og:locale" content="en_US">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{% if page and page.title and not page.is_homepage %}{{ page.title }} - {{ config.site_name }}{% else %}{{ config.site_name }}: {{ social_title }}{% endif %}">
+  <meta name="twitter:description" content="{{ page_desc }}">
+  <meta name="twitter:image" content="{{ og_image }}">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "TRACE Tests",
+        "applicationCategory": "DeveloperApplication",
+        "description": "Conformance tests and an integration harness for TRACE implementations. Verify that attestation receipts meet the specification before shipping to production.",
+        "url": "{{ config.site_url }}",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "author": { "@type": "Organization", "name": "AgenTrust", "url": "https://agentrust-io.com" },
+        "isPartOf": { "@type": "WebSite", "name": "{{ config.site_name }}", "url": "{{ config.site_url }}" }
+      },
+      {
+        "@type": "Organization",
+        "name": "AgenTrust",
+        "url": "https://agentrust-io.com",
+        "sameAs": [
+          "https://github.com/agentrust-io",
+          "https://agentrust-io.com/demos/",
+          "https://trace.agentrust-io.com",
+          "https://cmcp.agentrust-io.com",
+          "https://manifest.agentrust-io.com",
+          "https://ca2a.agentrust-io.com"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "name": "{{ config.site_name }}",
+        "url": "{{ config.site_url }}"
+      }
+    ]
+  }
+  </script>
+{% endblock %}
