@@ -1,0 +1,29 @@
+# TRACE Tests
+
+> Conformance test suite for TRACE — Trust Runtime Attestation and Compliance Evidence
+
+TRACE Tests is the conformance suite for TRACE (Trust Runtime Attestation and Compliance Evidence), the AgenTrust open standard for signed, hardware-attested AI agent governance records. Use it to check that your attestation receipts satisfy the specification, at each conformance level, before shipping them to production.
+
+## Getting started
+
+- [Home](https://tests.agentrust-io.com/index.md)
+- [Getting Started](https://tests.agentrust-io.com/docs/quickstart/index.md)
+- [Conformance Levels](https://tests.agentrust-io.com/docs/levels/index.md)
+
+## Test modules
+
+- [Overview](https://tests.agentrust-io.com/docs/modules/index.md)
+- [Envelope (TR-ENV)](https://tests.agentrust-io.com/docs/modules/tr-env/index.md)
+- [Signature (TR-SIG)](https://tests.agentrust-io.com/docs/modules/tr-sig/index.md)
+- [Runtime (TR-RTE)](https://tests.agentrust-io.com/docs/modules/tr-rte/index.md)
+- [Policy (TR-POL)](https://tests.agentrust-io.com/docs/modules/tr-pol/index.md)
+- [Transcript (TR-TXN)](https://tests.agentrust-io.com/docs/modules/tr-txn/index.md)
+- [Transparency (TR-ANC)](https://tests.agentrust-io.com/docs/modules/tr-anc/index.md)
+- [Provenance (TR-SCA)](https://tests.agentrust-io.com/docs/modules/tr-sca/index.md)
+
+## Reference
+
+- [Error Codes](https://tests.agentrust-io.com/docs/error-codes/index.md)
+- [Writing conformance tests](https://tests.agentrust-io.com/docs/tutorials/writing-conformance-tests/index.md)
+- [CI integration](https://tests.agentrust-io.com/docs/tutorials/ci-integration/index.md)
+
