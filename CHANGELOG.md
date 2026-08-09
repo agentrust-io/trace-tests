@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.5.0 — 2026-08-09
+
 ### Added
 
 - **`trace-tests report`: conformance results as an artifact somebody can forward.** `verify` answers a question for whoever ran it; a pass/fail in a terminal is useless to an auditor, a counterparty or an acquirer. The new command emits self-contained HTML, a machine-readable JSON document (`schema: agentrust-io/trace-tests/report/1`), and an SVG level badge.
