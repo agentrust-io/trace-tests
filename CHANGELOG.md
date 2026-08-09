@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Added
+
+- **`trace-tests report`: conformance results as an artifact somebody can forward.** `verify` answers a question for whoever ran it; a pass/fail in a terminal is useless to an auditor, a counterparty or an acquirer. The new command emits self-contained HTML, a machine-readable JSON document (`schema: agentrust-io/trace-tests/report/1`), and an SVG level badge.
+
+  It runs every level up to `--max-level` instead of one, because the answer a reader needs is the highest level the record reaches, not whether it cleared the level the person running the tool happened to choose. `--fail-under N` gates CI on a level; without it the command exits `0`, since producing an artifact and enforcing a threshold are different jobs.
+
+  **The report states that it is not evidence.** It is unsigned HTML describing one run of one suite version, and anyone can edit it, so every report carries the record's digest, the suite and authoring-library versions, and the command to reproduce the result — and tells a reader who does not trust the sender to go check the record instead. A conformance report that looks authoritative and cannot be checked is the same shape of thing as a control plane writing its own log, which is the problem this project exists to fix.
+
+  Self-contained by construction: no scripts, no external CSS, no fonts, no badge service. A badge served from someone else's infrastructure would add a dependency to an artifact whose whole point is needing none. A test asserts the HTML fetches nothing.
+
+  The HTML and the JSON are rendered from one assembled structure so they cannot disagree about the verdict, and unverified findings count as failures from Level 1 up exactly as they do in `verify`.
+
 ## v0.4.1 — 2026-08-03
 
 ### Fixed
