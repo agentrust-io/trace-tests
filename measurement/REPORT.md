@@ -10,7 +10,9 @@ level up worth asking, and as far as the repository shows, unasked so far:
 > If a check inside a conformance module silently stopped working, would the
 > repository's own test suite catch it?
 
-For most checks, yes. For ten of the thirty-three failure paths, no.
+When this was first measured, the answer was no for ten of the thirty-three failure
+paths. Those ten are now guarded, and the measurement is what established which ones
+needed it.
 
 ---
 
@@ -21,25 +23,32 @@ modules   7        src/trace_tests/modules/tr_*.py
 checks    18       distinct TR-xxx-nnn codes
 sites     33       Finding(..., Status.FAIL, ...) constructions
 
-by check   15 of 18 verified,  3 unverified
-by site    23 of 33 verified, 10 unverified
-
-site margin distribution   0→10   1→12   2→6   3→1   4→3   5→1
+by check   18 of 18 verified,  0 unverified
+by site    33 of 33 verified,  0 unverified
 ```
 
-**Counting by check understates it by more than threefold.** A check code emitted from
-three places can have one failure path nothing verifies while the other two are covered,
-and it still counts as verified. The sites are where the checks actually live.
+Eight checks sit at margin 1, meaning exactly one test stands between them and silent
+regression. That is a floor, not a comfortable state, and it is the number to watch.
 
-### The three checks nothing verifies at all
+### What the first measurement found
 
-| Check | What it enforces | Sites |
+| Check | What it enforces | Sites then unverified |
 |---|---|---|
-| `TR-SIG-002` | `cnf.jwk` is an OKP/Ed25519 key and carries `x` | 2 of 2 unverified |
-| `TR-TXN-001` | `tool_transcript` is present at Level 2, is an object, and its hash is a well-formed digest | 3 of 3 unverified |
-| `TR-TXN-002` | `tool_transcript.call_count` is a non-negative integer | 1 of 1 unverified |
+| `TR-SIG-002` | `cnf.jwk` is an OKP/Ed25519 key and carries `x` | 2 of 2 |
+| `TR-TXN-001` | `tool_transcript` is present at Level 2, is an object, and its hash is a well-formed digest | 3 of 3 |
+| `TR-TXN-002` | `tool_transcript.call_count` is a non-negative integer | 1 of 1 |
+| `TR-SCA-001` | `build_provenance` is an object | 1 site |
+| `TR-SIG-004` | `cnf.jwk.kty` is a supported key type | 1 site |
+| `TR-SIG-005` | a signature that cannot be checked fails rather than going unverified | 1 site |
+| `TR-ANC-001` | a transparency URI that cannot be parsed fails cleanly | 1 site |
 
-Rewriting any of these so it can never fail leaves the suite green.
+`tr_txn` and `tr_sca` had no unit tests at all, which is why every one of their failure
+paths measured zero. `TR-TXN-001` carried the most weight: it is the Level 2 requirement
+that a tool transcript exist, and nothing else in the suite enforced it.
+
+**Counting by check understates the problem by more than threefold.** A check code emitted
+from three places can have one failure path nothing verifies while the other two are
+covered, and still count as verified. The sites are where the checks actually live.
 
 `TR-TXN-001` carries the most weight. It is the Level 2 requirement that a tool
 transcript exist at all. If it regressed, implementations would continue to be stamped

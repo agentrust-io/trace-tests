@@ -5,9 +5,12 @@ Does this repository's own suite notice when one of its conformance checks stops
 **None of the checks measured here is wrong.** They behave correctly today. This measures
 something narrower: whether a *regression* inside a conformance module would be caught.
 
-For 23 of 33 failure paths, it would. For ten, it would not — including all three failure
-paths of `TR-TXN-001`, which is the only place the Level 2 tool-transcript requirement is
-enforced.
+It does now, for all 33. When this was first run, ten failure paths were unguarded,
+including all three of `TR-TXN-001`, which is the only place the Level 2 tool-transcript
+requirement is enforced. Those ten got tests, and the measurement is how they were found.
+
+Re-run it after touching any conformance module. Eight checks sit at margin 1, so a single
+deleted test puts one of them back to zero.
 
 [`REPORT.md`](REPORT.md) has the findings, the method, and what the method does not
 establish.

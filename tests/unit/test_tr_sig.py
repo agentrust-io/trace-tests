@@ -151,3 +151,52 @@ def test_plain_trace_tampered_embedded_signature_fails():
     findings = check(trace, trace, "trace")
     sig_findings = [f for f in findings if f.code == "TR-SIG-005"]
     assert any(f.failed() for f in sig_findings), sig_findings
+
+
+# --- the four TR-SIG paths that measured margin 0 --------------------------
+#
+# Each of these sites could have been deleted with no test failing. The two
+# check_cmcp_runtime key-shape sites matter most: they are the guard that stops a
+# record being read as Ed25519-verified when it carries some other key entirely.
+
+
+def test_cmcp_runtime_non_ed25519_key_fails():
+    """kty/crv is not OKP/Ed25519. Deleting this site would let the verifier
+    proceed toward an Ed25519 verification on a key that is not one."""
+    record = _make_signed_record()
+    record["trace"]["cnf"]["jwk"] = {"kty": "EC", "crv": "P-256", "x": "irrelevant"}
+    failed = [f for f in check(record["trace"], record, "cmcp-runtime") if f.failed()]
+    assert any(f.code == "TR-SIG-002" for f in failed), failed
+
+
+def test_cmcp_runtime_ed25519_without_x_fails():
+    """Right key type, no public key. Separated from the case above because an
+    implementation that checks kty/crv without checking x passes one and fails
+    the other, which is what makes them two vectors rather than one."""
+    record = _make_signed_record()
+    record["trace"]["cnf"]["jwk"] = {"kty": "OKP", "crv": "Ed25519"}
+    failed = [f for f in check(record["trace"], record, "cmcp-runtime") if f.failed()]
+    assert any(f.code == "TR-SIG-002" for f in failed), failed
+
+
+def test_unsupported_key_type_fails():
+    """kty present and not in the supported set, as distinct from kty absent."""
+    record = _make_signed_record()
+    trace = record["trace"]
+    trace["cnf"]["jwk"] = {"kty": "RSA", "n": "...", "e": "AQAB"}
+    failed = [f for f in check(trace, record, "trace") if f.failed()]
+    assert any(f.code == "TR-SIG-004" for f in failed), failed
+    assert any("unsupported key type" in f.message for f in failed)
+
+
+def test_signature_present_with_wrong_key_type_fails():
+    """A signature that cannot be checked must fail, never quietly go unverified.
+    Distinct from the no-signature path, which is UNVERIFIED at Level 0."""
+    record = _make_signed_record()
+    trace = record["trace"]
+    trace["signature"] = record["signature"]
+    trace["cnf"]["jwk"] = {"kty": "EC", "crv": "P-256", "x": "irrelevant"}
+    sig_findings = [f for f in check(trace, record, "trace") if f.code == "TR-SIG-005"]
+    assert sig_findings, "TR-SIG-005 must be reported when a signature is present"
+    assert any(f.failed() for f in sig_findings), sig_findings
+    assert not any(f.status == Status.UNVERIFIED for f in sig_findings)
