@@ -89,6 +89,13 @@ def test_non_integer_call_count_fails():
     assert any(f.code == "TR-TXN-002" for f in failed)
 
 
+def test_boolean_call_count_fails():
+    """bool is an int subclass, so True passes a bare isinstance check and reads
+    as a call count of one. Found by writing these guards, fixed with them."""
+    failed = [f for f in check(_txn(call_count=True)) if f.failed()]
+    assert any(f.code == "TR-TXN-002" for f in failed)
+
+
 def test_zero_call_count_is_valid():
     """A transcript with no calls is a real outcome, not an error."""
     failed = [f for f in check(_txn(call_count=0)) if f.failed()]
