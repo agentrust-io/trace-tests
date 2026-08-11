@@ -53,5 +53,5 @@ All TRACE test failures emit a structured error code of the form `TR-<MODULE>-<N
 
 | Code | Description | How to fix |
 |------|-------------|------------|
-| TR-SCA-001 | `build_provenance.slsa_level` is not 0–4 | Set `build_provenance.slsa_level` to an integer 0–4 matching your SLSA build level |
+| TR-SCA-001 | `build_provenance.slsa_level` is not 0–3 | Set `build_provenance.slsa_level` to an integer 0–3 matching your SLSA build level |
 | TR-SCA-002 | `build_provenance.digest` is not a valid `sha256:` digest | Set `build_provenance.digest` to `sha256:` + 64 hex chars of the container image or artifact digest |

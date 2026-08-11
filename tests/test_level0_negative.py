@@ -175,7 +175,7 @@ class TestUnknownPlatform:
 @pytest.mark.level0
 @pytest.mark.negative
 class TestSlsaLevelOutOfRange:
-    """build_provenance.slsa_level must be 1, 2, or 3."""
+    """build_provenance.slsa_level must be 0, 1, 2, or 3."""
 
     def test_slsa_level_4_fails_schema(self, schema, valid_level0):
         bad = _mutate(valid_level0, "build_provenance", "slsa_level", 4)
