@@ -122,6 +122,21 @@ is the property. The two are not related closely enough to substitute one for th
   green, and would have been recorded as evidence for the opposite of the truth.
 - **An empty site list would report perfect coverage.** Zero sites is a hard stop.
 - **Restoration is verified**, not assumed, after every site.
+- **A suite that did not run against this code looks exactly like a suite that notices
+  nothing.** A stale editable install, or any `trace_tests` earlier on `sys.path`, leaves
+  the baseline green and every mutation unobserved: pytest never imports the file being
+  rewritten, so the run reports zero verified. The import path is resolved and checked
+  against this checkout before the baseline runs.
+- **A stale `__pycache__` reports a margin the code does not have.** `Status.FAIL` and
+  `Status.PASS` are the same length, so a rewrite changes no file size, and a run can end
+  up measuring the previous iteration's bytecode. This is the worst of the guards to be
+  missing, because it fails *upward*: the previous iteration's failures are attributed to
+  the site under mutation, margins come out larger than they are, and a check held by
+  exactly one test is reported as comfortably covered. Caches are purged before every
+  suite run. Without the purge, four consecutive runs on one unchanged tree reported the
+  margin-1 watch list as empty three times and as two entries once; the list has eight
+  entries. A fourth run also left `pytest` failing on 14 tests against a tree `git status`
+  reported as clean.
 - **An empty path is rejected before it can look valid.** `Path("")` is `.`, which is a
   directory, so the obvious existence check passes and the script measures whichever tree
   it happens to be standing in. The enum comparison had exactly this hole and reported
@@ -144,15 +159,19 @@ is the property. The two are not related closely enough to substitute one for th
   fail together because they share a fixture are one test for this purpose, and this
   measurement does not distinguish that.
 - **Nothing here was reported upstream at the time of writing**, and nothing in
-  `trace-tests` was modified. The checkout was restored and re-verified green after every
-  mutation.
+  `trace-tests` was modified. Every mutated source file is restored, and the restoration
+  is verified, after every site. Restoring the *file* is not the same as leaving the
+  checkout usable: until caches were purged between runs, a completed run could leave
+  `pytest` failing against a tree `git status` reported as clean, because the interpreter
+  was still loading bytecode compiled from a mutated source. The cache purge above is what
+  makes "restored" mean what it reads as.
 
 ---
 
 ## Reproducing
 
 ```bash
-pip install -e ".[dev]" && pytest -q          # expect 118 passed, 5 xpassed
+pip install -e ".[dev]" && pytest -q          # expect 161 passed, 5 xpassed
 
 python measurement/scripts/mutate_modules.py  # exits 1 if any check is unguarded
 python measurement/scripts/enum_drift.py      # exits 1 on any drifted enum
