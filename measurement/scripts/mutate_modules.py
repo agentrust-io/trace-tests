@@ -106,6 +106,47 @@ def fail_sites() -> list[Site]:
     return sites
 
 
+def assert_suite_imports_this_checkout() -> None:
+    """The suite must import the tree being mutated, not another copy of it.
+
+    The three guards above all defend against a mutation that did not take effect. This
+    one defends against it taking effect on a tree the suite never imports: an editable
+    install pointing elsewhere, a wheel earlier on `sys.path`, a stale `.pth`. Nothing
+    fails, every site reports that nothing noticed, and that is indistinguishable from a
+    suite with no guarded checks at all. Observed: 0 of 18 verified against a checkout
+    whose modules were being rewritten correctly the whole time.
+
+    Checked before the baseline rather than diagnosed after, and through the same
+    interpreter and working directory `run_suite` uses, so the probe resolves the import
+    the way the measurement will rather than the way this script was launched.
+    """
+    probe = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import pathlib, trace_tests; print(pathlib.Path(trace_tests.__file__).resolve())",
+        ],
+        cwd=TRACE_TESTS,
+        capture_output=True,
+        text=True,
+    )
+    if probe.returncode != 0:
+        sys.exit(
+            "could not import trace_tests with the interpreter that runs the suite:\n"
+            + probe.stderr.strip()
+        )
+    imported = Path(probe.stdout.strip())
+    expected = (TRACE_TESTS / "src" / "trace_tests").resolve()
+    if not (expected == imported.parent or expected in imported.parents):
+        sys.exit(
+            f"the suite imports trace_tests from {imported.parent}\n"
+            f"but this run mutates            {expected}\n"
+            "Every site would report that nothing noticed, which is also what a suite with "
+            "no guarded checks looks like. Reinstall with `pip install -e .` from this "
+            "checkout, or run with PYTHONPATH=src."
+        )
+
+
 def run_suite() -> int:
     """Return the number of failing tests. No `-x`: the count is the margin."""
     result = subprocess.run(
@@ -125,6 +166,8 @@ def main() -> int:
 
     print(f"checkout: {TRACE_TESTS}")
     print(f"modules:  {len(MODULES)}   FAIL sites: {len(sites)}\n")
+
+    assert_suite_imports_this_checkout()
 
     baseline = run_suite()
     if baseline:
