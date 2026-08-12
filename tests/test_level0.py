@@ -4,9 +4,10 @@ import jsonschema
 
 SUBJECT_RE = re.compile(r"^(spiffe://|did:)")
 DIGEST_RE = re.compile(r"^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})$")
+# These three restate schema enums. `tests/test_enum_parity.py` fails if any drifts.
 VALID_PLATFORMS = {
     "intel-tdx", "amd-sev-snp", "azure-cvm-sev-snp", "nvidia-h100", "nvidia-blackwell",
-    "aws-nitro", "arm-cca", "google-confidential-space", "tpm2",
+    "aws-nitro", "arm-cca", "google-confidential-space", "tpm2", "software-only",
 }
 VALID_ENFORCEMENT = {"enforce", "advisory", "silent"}
 VALID_APPRAISAL = {"affirming", "warning", "contraindicated", "none"}

@@ -8,6 +8,8 @@ from typing import Any
 from trace_tests.result import Finding, Status
 
 _DIGEST_RE = re.compile(r"^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})$")
+#: Mirrors `policy.enforcement_mode` in the packaged schema; `test_enum_parity` fails if
+#: it drifts from that copy.
 _VALID_ENFORCEMENT = frozenset({"enforce", "advisory", "silent"})
 
 
