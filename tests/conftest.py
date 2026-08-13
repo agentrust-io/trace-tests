@@ -14,6 +14,11 @@ def load_vector(filename):
     return json.loads((VECTORS_DIR / filename).read_text())
 
 
+@pytest.fixture(name="load_vector")
+def load_vector_fixture():
+    return load_vector
+
+
 def load_schema():
     return json.loads((SCHEMAS_DIR / "trace-claim.json").read_text())
 
@@ -26,7 +31,9 @@ def _canonical_json(d: dict) -> bytes:
     return json.dumps(d, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
 
 
-def _build_signed_cmcp_record(*, platform: str = "tpm2", nonce: str | None = None) -> tuple[dict, Ed25519PrivateKey]:
+def _build_signed_cmcp_record(
+    *, platform: str = "tpm2", nonce: str | None = None
+) -> tuple[dict, Ed25519PrivateKey]:
     """Return (record, private_key) for a fully-signed cmcp-runtime claim.
 
     The signature covers the canonical JSON of the envelope with the 'signature'
