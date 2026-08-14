@@ -6,7 +6,7 @@
   "type": "object",
   "required": [
     "eat_profile", "iat", "subject", "model", "runtime", "policy",
-    "data_class", "build_provenance", "appraisal", "transparency", "cnf"
+    "data_class", "build_provenance", "appraisal", "cnf"
   ],
   "properties": {
     "eat_profile": {"type": "string", "const": "tag:agentrust-io.com,2026:trace-v0.2"},
@@ -58,6 +58,21 @@
       },
       "additionalProperties": false
     },
+    "origin": {
+      "type": "object",
+      "description": "Where imported evidence came from. A non-self origin cannot carry a hardware runtime platform.",
+      "required": ["kind", "producer"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["self", "third-party-control-plane", "log-import"]
+        },
+        "producer": {"type": "string", "minLength": 1},
+        "source_event_id": {"type": "string", "minLength": 1},
+        "ingested_at": {"type": "integer", "minimum": 1700000000}
+      },
+      "additionalProperties": false
+    },
     "build_provenance": {
       "type": "object",
       "required": ["slsa_level", "digest"],
@@ -100,5 +115,27 @@
       "additionalProperties": false
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "required": ["origin"],
+        "properties": {
+          "origin": {
+            "required": ["kind"],
+            "properties": {
+              "kind": {"enum": ["third-party-control-plane", "log-import"]}
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "runtime": {
+            "properties": {"platform": {"const": "software-only"}}
+          }
+        }
+      }
+    }
+  ]
 }
