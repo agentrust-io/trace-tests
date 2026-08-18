@@ -99,6 +99,20 @@ def invalid_missing_runtime():
 
 
 @pytest.fixture
+def signed_root():
+    """A signed Trust Record with no delegation block, from trace-spec's
+    `examples/delegation-link/01-valid-single-hop.json`."""
+    return load_vector("signed_root.json")
+
+
+@pytest.fixture
+def signed_delegated_hop():
+    """The delegated hop from the same chain: signed, and carrying a
+    `delegation` block."""
+    return load_vector("signed_delegated_hop.json")
+
+
+@pytest.fixture
 def invalid_wrong_profile():
     return load_vector("invalid_wrong_profile.json")
 
