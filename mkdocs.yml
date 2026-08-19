@@ -145,6 +145,7 @@ extra:
 
 extra_css:
   - docs/stylesheets/extra.css
+  - https://agentrust-io.com/design-system.css
 
 nav:
   - Home: README.md
