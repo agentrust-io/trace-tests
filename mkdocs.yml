@@ -28,18 +28,18 @@ theme:
   custom_dir: overrides
   font: false
   palette:
-    - scheme: slate
-      primary: custom
-      accent: custom
-      toggle:
-        icon: material/brightness-7
-        name: Switch to light mode
     - scheme: default
       primary: custom
       accent: custom
       toggle:
         icon: material/brightness-4
         name: Switch to dark mode
+    - scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to light mode
   features:
     - navigation.instant
     - navigation.instant.progress
