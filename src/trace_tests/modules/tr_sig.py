@@ -1,19 +1,29 @@
 """TR-SIG: Signature verification (spec §3.2.1).
 
-For cmcp-runtime records: Ed25519 over canonical JSON (sorted keys, no whitespace,
-excluding the ``signature`` field). Key is in ``trace.cnf.jwk``.
+Records are verified over their RFC 8785 (JCS) canonical bytes, excluding the
+``signature`` field, with the key in ``trace.cnf.jwk``.
 
-For plain trace records no signature can be cryptographically verified, so TR-SIG
-fails closed: at any level that requires signatures (level >= 1) the result is FAIL;
-at level 0 the result is an explicit UNVERIFIED finding so the record can never be
-reported as cryptographically verified.
+RFC 8785 and not an ad-hoc serializer, because §3.2.2 of the specification says so
+in as many words: "Implementations MUST use an RFC 8785-conformant library. Using
+``json.dumps(sort_keys=True)`` (Python) or equivalent ad-hoc sorting is
+insufficient." This module used ``json.dumps(sort_keys=True, separators=(",", ":"),
+ensure_ascii=True)`` until it was pointed at trace-spec's canonicalization corpus,
+which rejected all four of its valid, correctly signed records. The two forms agree
+on every ASCII record, which is every record this suite carried, so nothing here
+failed while the suite told conformant implementations they were not.
+
+A plain trace record carrying a ``signature`` field is verified against it. One
+without a signature cannot be, so TR-SIG fails closed: at any level that requires
+signatures (level >= 1) the result is FAIL; at level 0 it is an explicit UNVERIFIED
+finding, so a record with nothing to check is never reported as verified.
 """
 
 from __future__ import annotations
 
 import base64
-import json
 from typing import Any
+
+import rfc8785
 
 from trace_tests.result import Finding, Status
 
@@ -29,7 +39,15 @@ def _b64url_decode(s: str) -> bytes:
 
 
 def _canonical_json(d: dict[str, Any]) -> bytes:
-    return json.dumps(d, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
+    """RFC 8785 canonical bytes, per specification §3.2.2.
+
+    Not ``json.dumps`` with its options set carefully. The escaping of non-ASCII and
+    the sort order of keys containing supplementary-plane characters both differ, and
+    a verifier that gets either wrong computes different bytes and rejects a valid
+    record. ``tests/test_canonicalization_boundary.py`` holds this to records where
+    the difference is observable.
+    """
+    return rfc8785.dumps(d)
 
 
 def _verify_ed25519(pub_x: str, sig_b64: str, body: bytes) -> tuple[bool, str]:

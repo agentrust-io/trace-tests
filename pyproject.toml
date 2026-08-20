@@ -28,6 +28,9 @@ dependencies = [
     "click>=8.1",
     "cryptography>=42",
     "jsonschema>=4.23",
+    # Signature verification canonicalizes with RFC 8785, which specification
+    # §3.2.2 requires by name and rules out doing by hand.
+    "rfc8785>=0.1.2",
 ]
 
 [project.urls]
