@@ -111,7 +111,7 @@ Error codes follow the form `TR-<MODULE>-<NNN>`.
 
 | What | Where |
 |------|-------|
-| Understand what each test checks | [Test Modules](modules/index.md) |
+| Understand what each test checks | [Test Modules](modules.md) |
 | Look up a specific error code | [Error Codes](error-codes.md) |
 | Write your own conformance tests | [Tutorial: Writing conformance tests](tutorials/writing-conformance-tests.md) |
 | Set up CI | [Tutorial: CI integration](tutorials/ci-integration.md) |

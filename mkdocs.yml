@@ -27,6 +27,8 @@ theme:
   name: material
   custom_dir: overrides
   font: false
+  logo: docs/assets/icon.svg
+  favicon: docs/assets/icon.svg
   palette:
     - scheme: default
       primary: custom
@@ -144,7 +146,9 @@ extra:
   generator: false
 
 extra_css:
-  - docs/stylesheets/extra.css
+  # Shared AgenTrust editorial design system. Deliberately the only stylesheet:
+  # a local override here is how this site drifted to the Material default
+  # violet last time. Change the shared file instead.
   - https://agentrust-io.com/design-system.css
 
 nav:
@@ -164,9 +168,11 @@ nav:
       - Provenance (TR-SCA): docs/modules/tr-sca.md
   - Conformance Levels: docs/levels.md
   - Error Codes: docs/error-codes.md
+  - Self-verification: measurement/REPORT.md
   - Project:
       - Changelog: CHANGELOG.md
       - Contributing: CONTRIBUTING.md
+      - Privacy: PRIVACY.md
 
 extra_javascript:
   - https://agentrust-io.com/supernav.js
