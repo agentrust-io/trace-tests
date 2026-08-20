@@ -1,0 +1,57 @@
+{
+  "name": "no-binding-declared",
+  "description": "The record cites an appraisal policy by bare URI and declares no binding to what that URI held. This is every conformant record today, so it must keep verifying: a set that rejected it would be proposing a breaking change rather than describing a gap.",
+  "boundary": "accept",
+  "defect": "none - backward-compatibility control",
+  "spec": "Mirrors the merged treatment of an undeclared depth in agentrust-io/trace-spec#173, where a record that never declared is read as surface rather than as a failure.",
+  "record": {
+    "eat_profile": "tag:agentrust-io.com,2026:trace-v0.2",
+    "iat": 1748000000,
+    "subject": "spiffe://example.org/agent/credit-risk/01926b4c-1234-7abc-9def-000000000001",
+    "model": {
+      "provider": "anthropic",
+      "model_id": "claude-sonnet-4-5"
+    },
+    "runtime": {
+      "platform": "intel-tdx",
+      "measurement": "sha256:a3f8d2b4e1c9f7a5b2d4e6f8a0b2c4d6e8f0a2b4c6d8e0f2a4b6c8d0e2f4a6b8"
+    },
+    "policy": {
+      "bundle_hash": "sha256:b4e1c9f7a5b2d4e6f8a0b2c4d6e8f0a2b4c6d8e0f2a4b6c8d0e2f4a6b8c0d2e4",
+      "enforcement_mode": "enforce"
+    },
+    "data_class": "confidential",
+    "build_provenance": {
+      "slsa_level": 2,
+      "digest": "sha256:c9f7a5b2d4e6f8a0b2c4d6e8f0a2b4c6d8e0f2a4b6c8d0e2f4a6b8c0d2e4f6a8"
+    },
+    "appraisal": {
+      "status": "affirming",
+      "verifier": "https://verifier.example.org",
+      "policy_ref": "https://policy.example.org/appraisal/appraisal-policy-v1.json",
+      "timestamp": 1748000042
+    },
+    "transparency": "https://scitt.example.org/receipts/abc123def456",
+    "cnf": {
+      "jwk": {
+        "kty": "EC",
+        "crv": "P-256",
+        "x": "dGhpcyBpcyBhIHRlc3QgeA",
+        "y": "dGhpcyBpcyBhIHRlc3QgeQ",
+        "kid": "tee-key-001"
+      }
+    }
+  },
+  "context": {
+    "cited_uri": "https://policy.example.org/appraisal/appraisal-policy-v1.json",
+    "resolution": {
+      "outcome": "not_attempted",
+      "note": "No binding is declared, so there is nothing to check."
+    },
+    "candidate_binding": null
+  },
+  "expected": {
+    "outcome": "pass",
+    "reason": "No binding declared; nothing to contradict."
+  }
+}
