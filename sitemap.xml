@@ -13,6 +13,10 @@
          <lastmod>2026-08-20</lastmod>
     </url>
     <url>
+         <loc>https://tests.agentrust-io.com/PRIVACY/</loc>
+         <lastmod>2026-08-20</lastmod>
+    </url>
+    <url>
          <loc>https://tests.agentrust-io.com/docs/error-codes/</loc>
          <lastmod>2026-08-20</lastmod>
     </url>
@@ -62,6 +66,14 @@
     </url>
     <url>
          <loc>https://tests.agentrust-io.com/docs/tutorials/writing-conformance-tests/</loc>
+         <lastmod>2026-08-20</lastmod>
+    </url>
+    <url>
+         <loc>https://tests.agentrust-io.com/measurement/</loc>
+         <lastmod>2026-08-20</lastmod>
+    </url>
+    <url>
+         <loc>https://tests.agentrust-io.com/measurement/REPORT/</loc>
          <lastmod>2026-08-20</lastmod>
     </url>
 </urlset>
