@@ -110,7 +110,7 @@ Error codes follow the form `TR-<MODULE>-<NNN>`.
 
 | What                             | Where                                                                                                                   |
 | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Understand what each test checks | [Test Modules](https://tests.agentrust-io.com/docs/quickstart/modules/index.md)                                         |
+| Understand what each test checks | [Test Modules](https://tests.agentrust-io.com/docs/modules/index.md)                                                    |
 | Look up a specific error code    | [Error Codes](https://tests.agentrust-io.com/docs/error-codes/index.md)                                                 |
 | Write your own conformance tests | [Tutorial: Writing conformance tests](https://tests.agentrust-io.com/docs/tutorials/writing-conformance-tests/index.md) |
 | Set up CI                        | [Tutorial: CI integration](https://tests.agentrust-io.com/docs/tutorials/ci-integration/index.md)                       |

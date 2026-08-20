@@ -163,5 +163,5 @@ The certification program (launching 2027) will require Level 1 at minimum.
 ## Related
 
 - [Error Codes](https://tests.agentrust-io.com/docs/error-codes/index.md) — every TR-\* error with description and fix
-- [Test Modules](https://tests.agentrust-io.com/docs/levels/modules/index.md) — per-module test lists with positive and negative cases
+- [Test Modules](https://tests.agentrust-io.com/docs/modules/index.md) — per-module test lists with positive and negative cases
 - [TRACE Trust Levels](https://trace.agentrust-io.com/trust-levels) — full specification of what each level proves
