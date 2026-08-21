@@ -15,12 +15,12 @@ exclude_docs: |
   schemas/
   LICENSE
   NOTICE
+  README.md
   ANTITRUST.md
   ADOPTERS.md
   MAINTAINERS.md
   SECURITY.md
   CHARTER.md
-  CODE_OF_CONDUCT.md
   pyproject.toml
 
 theme:
@@ -72,7 +72,7 @@ plugins:
         conformance level, before shipping them to production.
       sections:
         Getting started:
-          - README.md
+          - index.md
           - docs/quickstart.md
           - docs/levels.md
         Test modules:
@@ -141,7 +141,7 @@ extra:
       link: https://github.com/agentrust-io/trace-tests
       name: trace-tests on GitHub
     - icon: fontawesome/brands/discord
-      link: https://discord.gg/9JWNpH7E
+      link: https://discord.gg/grgzFEHgkj
       name: Join the Discord
   generator: false
 
@@ -152,7 +152,7 @@ extra_css:
   - https://agentrust-io.com/design-system.css
 
 nav:
-  - Home: README.md
+  - Home: index.md
   - Getting Started: docs/quickstart.md
   - Tutorials:
       - Writing conformance tests: docs/tutorials/writing-conformance-tests.md
@@ -172,6 +172,7 @@ nav:
   - Project:
       - Changelog: CHANGELOG.md
       - Contributing: CONTRIBUTING.md
+      - Code of Conduct: CODE_OF_CONDUCT.md
       - Privacy: PRIVACY.md
 
 extra_javascript:

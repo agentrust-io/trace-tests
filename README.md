@@ -23,7 +23,7 @@
 [![TRACE Spec](https://img.shields.io/badge/TRACE-Spec_v0.2-0ea5e9)](https://github.com/agentrust-io/trace-spec)
 [![Tests](https://img.shields.io/badge/Conformance_Tests-7_modules-green)]()
 [![CI](https://github.com/agentrust-io/trace-tests/actions/workflows/ci.yml/badge.svg)](https://github.com/agentrust-io/trace-tests/actions/workflows/ci.yml)
-[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white&style=flat)](https://discord.gg/9JWNpH7E)
+[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white&style=flat)](https://discord.gg/grgzFEHgkj)
 
 > **Test suite v0.2.** Tracks [TRACE Spec v0.2](https://github.com/agentrust-io/trace-spec).
 

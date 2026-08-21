@@ -18,14 +18,6 @@
   repositories, and a hardcoded path is how cMCP shipped a broken card.
 #}
 
-{% block htmltitle %}
-  {% if page and page.is_homepage %}
-    <title>Verify your TRACE implementation - {{ config.site_name }}</title>
-  {% else %}
-    {{ super() }}
-  {% endif %}
-{% endblock %}
-
 {% block extrahead %}
   {{ super() }}
   {% set page_desc = page.meta.description if page and page.meta and page.meta.description else config.site_description %}
@@ -35,7 +27,7 @@
 
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="{{ config.site_name }}">
-  <meta property="og:title" content="{% if page and page.title and not page.is_homepage %}{{ page.title }} - {{ config.site_name }}{% else %}{{ config.site_name }}: {{ social_title }}{% endif %}">
+  <meta property="og:title" content="{% if page and page.title %}{{ page.title }} - {{ config.site_name }}{% else %}{{ config.site_name }}: {{ social_title }}{% endif %}">
   <meta property="og:description" content="{{ page_desc }}">
   <meta property="og:url" content="{{ page_url }}">
   <meta property="og:image" content="{{ og_image }}">
@@ -45,7 +37,7 @@
   <meta property="og:locale" content="en_US">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="{% if page and page.title and not page.is_homepage %}{{ page.title }} - {{ config.site_name }}{% else %}{{ config.site_name }}: {{ social_title }}{% endif %}">
+  <meta name="twitter:title" content="{% if page and page.title %}{{ page.title }} - {{ config.site_name }}{% else %}{{ config.site_name }}: {{ social_title }}{% endif %}">
   <meta name="twitter:description" content="{{ page_desc }}">
   <meta name="twitter:image" content="{{ og_image }}">
 

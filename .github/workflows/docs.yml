@@ -56,7 +56,7 @@ jobs:
           # measurement/REPORT.md is in the nav as Self-verification.
           if [ -d measurement ]; then cp -r measurement $BUILD/measurement; fi
 
-          for fname in README.md CHANGELOG.md CONTRIBUTING.md PRIVACY.md CNAME; do
+          for fname in index.md CHANGELOG.md CONTRIBUTING.md CODE_OF_CONDUCT.md PRIVACY.md CNAME; do
             if [ -f "$fname" ]; then cp "$fname" "$BUILD/$fname"; fi
           done
 
