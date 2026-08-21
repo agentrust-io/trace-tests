@@ -1,0 +1,63 @@
+{
+  "name": "referent-unreachable",
+  "description": "The cited URI does not resolve; no object under policies/ corresponds to it. Nothing was contradicted, because nothing was read. This vector asserts only that the outcome is not affirming.",
+  "boundary": "unresolvable",
+  "defect": "referent unreachable at verification time",
+  "spec": "agentrust-io/trace-spec docs/verification.md - evidence that does not resolve downgrades honestly rather than failing. Which value records that for appraisal.policy_ref is open: agentrust-io/trace-spec#190. This vector asserts only what the outcome may NOT be.",
+  "record": {
+    "eat_profile": "tag:agentrust-io.com,2026:trace-v0.2",
+    "iat": 1748000000,
+    "subject": "spiffe://example.org/agent/credit-risk/01926b4c-1234-7abc-9def-000000000001",
+    "model": {
+      "provider": "anthropic",
+      "model_id": "claude-sonnet-4-5"
+    },
+    "runtime": {
+      "platform": "intel-tdx",
+      "measurement": "sha256:a3f8d2b4e1c9f7a5b2d4e6f8a0b2c4d6e8f0a2b4c6d8e0f2a4b6c8d0e2f4a6b8"
+    },
+    "policy": {
+      "bundle_hash": "sha256:b4e1c9f7a5b2d4e6f8a0b2c4d6e8f0a2b4c6d8e0f2a4b6c8d0e2f4a6b8c0d2e4",
+      "enforcement_mode": "enforce"
+    },
+    "data_class": "confidential",
+    "build_provenance": {
+      "slsa_level": 2,
+      "digest": "sha256:c9f7a5b2d4e6f8a0b2c4d6e8f0a2b4c6d8e0f2a4b6c8d0e2f4a6b8c0d2e4f6a8"
+    },
+    "appraisal": {
+      "status": "affirming",
+      "verifier": "https://verifier.example.org",
+      "policy_ref": "https://policy.example.org/appraisal/appraisal-policy-withdrawn.json",
+      "timestamp": 1748000042
+    },
+    "transparency": "https://scitt.example.org/receipts/abc123def456",
+    "cnf": {
+      "jwk": {
+        "kty": "EC",
+        "crv": "P-256",
+        "x": "dGhpcyBpcyBhIHRlc3QgeA",
+        "y": "dGhpcyBpcyBhIHRlc3QgeQ",
+        "kid": "tee-key-001"
+      }
+    }
+  },
+  "context": {
+    "cited_uri": "https://policy.example.org/appraisal/appraisal-policy-withdrawn.json",
+    "resolution": {
+      "outcome": "unreachable",
+      "file": null,
+      "note": "No sibling file corresponds to this URI, by construction."
+    },
+    "candidate_binding": {
+      "field": "CANDIDATE:appraisal.policy_digest",
+      "value": "sha256:d8764863e75e702ff64e53951eb3d005a84858979598f7f0bda11fc901416adc"
+    }
+  },
+  "expected": {
+    "outcome": "deferred",
+    "deferred_pending": "agentrust-io/trace-spec#190",
+    "must_not": "affirming",
+    "reason": "Reporting a check that was never performed as affirming is the failure this set exists to name. Which value is reported instead is not decided here."
+  }
+}
