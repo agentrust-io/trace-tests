@@ -9,4 +9,5 @@ Tests Ed25519 signature binding on the TRACE Trust Record.
 | TR-SIG-001 | Signature algorithm is Ed25519 (OKP crv=Ed25519) | `{"kty":"OKP","crv":"Ed25519"}` | ES256, RS256, missing `alg` |
 | TR-SIG-002 | `cnf.jwk` present and carries the public key | JWK with `x` member set | missing `cnf`, missing `jwk`, missing `x` |
 | TR-SIG-003 | Signature verifies over the canonical record bytes (RFC 8785 JCS) | valid Ed25519 signature | bit-flipped signature, wrong key |
-| TR-SIG-004 | `cnf.jwk` does not contain private key material (`d` member absent) | JWK with only `x` | JWK with `d` present |
+| TR-SIG-004 | `cnf.jwk.kty` is present and is a supported key type | `OKP`, `EC` | missing `kty`, `RSA` |
+| TR-SIG-005 | The signature check outcome: verified, unverifiable, or absent | valid Ed25519 signature | bit-flipped signature, no signature |
