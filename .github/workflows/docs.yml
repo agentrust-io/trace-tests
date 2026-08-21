@@ -13,6 +13,9 @@ on:
       - "CNAME"
       - "measurement/**"
       - "PRIVACY.md"
+      - "overrides/**"
+      - "index.md"
+      - "CODE_OF_CONDUCT.md"
   workflow_dispatch:
 
 permissions:
