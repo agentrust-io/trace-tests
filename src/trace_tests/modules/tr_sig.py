@@ -75,6 +75,27 @@ def _verify_ed25519(pub_x: str, sig_b64: str, body: bytes) -> tuple[bool, str]:
         return False, "TR-SIG-001: signature verification failed"
 
 
+def _jwk_of(container: Any) -> dict[str, Any]:
+    """The JWK under ``container["cnf"]["jwk"]``, or ``{}`` when it is not an object.
+
+    A malformed record must produce a finding, not an exception. ``runner.run`` calls
+    every module without a ``try``, so anything raised here ends the run rather than
+    failing the record, and the caller sees a traceback where a verdict belongs.
+
+    The outer ``isinstance`` is for ``check_cmcp_runtime``, which passes
+    ``record["trace"]`` and so can hand this anything at all. ``check`` passes the
+    ``trace`` it was given, which for the plain format is the record itself and is
+    already a dict; that function reads ``trace`` directly elsewhere and is not
+    hardened against a non-dict ``trace``. Whether one can reach it is a question
+    about ``loader.extract_trace``, not about this helper.
+    """
+    if not isinstance(container, dict):
+        return {}
+    cnf = container.get("cnf")
+    jwk = cnf.get("jwk") if isinstance(cnf, dict) else None
+    return jwk if isinstance(jwk, dict) else {}
+
+
 def check_cmcp_runtime(record: dict[str, Any]) -> list[Finding]:
     """Verify the Ed25519 signature on a cmcp RuntimeClaim."""
     findings: list[Finding] = []
@@ -84,7 +105,7 @@ def check_cmcp_runtime(record: dict[str, Any]) -> list[Finding]:
         findings.append(Finding("TR-SIG-001", Status.FAIL, "TR-SIG-001: signature field is missing or empty"))
         return findings
 
-    jwk = record.get("trace", {}).get("cnf", {}).get("jwk", {})
+    jwk = _jwk_of(record.get("trace"))
     kty = jwk.get("kty")
     crv = jwk.get("crv")
     x = jwk.get("x")
@@ -117,16 +138,24 @@ def check(trace: dict[str, Any], record: dict[str, Any], fmt: str, level: int = 
         return check_cmcp_runtime(record)
 
     findings: list[Finding] = []
-    jwk = trace.get("cnf", {}).get("jwk", {})
+    jwk = _jwk_of(trace)
     kty = jwk.get("kty")
     crv = jwk.get("crv")
     x = jwk.get("x")
 
     if "d" in jwk:
         findings.append(Finding(
-            rule="TR-SIG-002",
-            status=Status.FAIL,
-            message="cnf.jwk must not contain private key material ('d' field present in JWK)",
+            "TR-SIG-004", Status.FAIL,
+            "TR-SIG-004: cnf.jwk must not contain private key material "
+            "('d' member present in the JWK)",
+        ))
+        # The signature is not checked against a key the record should never have
+        # carried. Say so rather than returning nothing: a consumer reading TR-SIG-005
+        # to learn whether the signature was verified would otherwise find no finding
+        # at all, which is the benign-omission reading UNVERIFIED exists to prevent.
+        findings.append(Finding(
+            "TR-SIG-005", Status.UNVERIFIED,
+            "TR-SIG-005: signature not checked; cnf.jwk carries private key material",
         ))
         return findings
 
