@@ -139,7 +139,7 @@ def test_md5_bundle_hash_fails_tr_pol_001():
 def test_unknown_enforcement_mode_fails_tr_pol_002():
     trace = _policy_trace(
         bundle_hash="sha256:" + "b" * 64,
-        enforcement_mode="strict",  # not in {enforce, advisory, silent}
+        enforcement_mode="strict",  # not in {enforce, advisory, silent, declared}
     )
     codes = {f.code for f in tr_pol.check(trace) if f.failed()}
     assert "TR-POL-002" in codes
@@ -233,7 +233,7 @@ Common codes you will encounter:
 | TR-SIG-001 | `signature` | Signature missing or does not verify |
 | TR-SIG-002 | `cnf.jwk` | Key must be OKP/Ed25519 |
 | TR-POL-001 | `policy.bundle_hash` | Must match `sha256:<64 hex chars>` |
-| TR-POL-002 | `policy.enforcement_mode` | Must be `enforce`, `advisory`, or `silent` |
+| TR-POL-002 | `policy.enforcement_mode` | Must be `enforce`, `advisory`, `silent`, or `declared` |
 | TR-RTE-001 | `runtime.platform` | Must be a registered TEE platform enum |
 
 When a finding carries `status == Status.UNVERIFIED`, the record has no signature. This is not a benign skip at Level 1 or above.

@@ -9,7 +9,7 @@ All TRACE test failures emit a structured error code of the form `TR-<MODULE>-<N
 | TR-ENV-001 | Missing or invalid `eat_profile` URI | Set `eat_profile` to `"tag:agentrust-io.com,2026:trace-v0.2"` |
 | TR-ENV-002 | `iat` is missing, not an integer, or out of range | Set `iat` to a Unix timestamp integer (e.g. `int(time.time())`) |
 | TR-ENV-003 | `subject` does not match SPIFFE URI or DID pattern | Use `spiffe://<trust-domain>/<path>` or a `did:` URI |
-| TR-ENV-004 | One or more required fields are absent | Add the missing field(s); check the [Schema Reference](https://trace.agentrust-io.com/docs/schema/) for the full required set |
+| TR-ENV-004 | `cnf` is absent or not an object, `cnf.jwk` is absent or not an object, or `cnf.jwk.kty` is absent | Populate `cnf.jwk` with at least `kty`. This checks that one field, not the schema's full required set, which structural validation covers |
 
 ## TR-SIG — Signature
 
@@ -18,22 +18,23 @@ All TRACE test failures emit a structured error code of the form `TR-<MODULE>-<N
 | TR-SIG-001 | Signature algorithm is not Ed25519 | Generate an Ed25519 key (`generate_key()`) and re-sign; ES256 and RS256 are not accepted |
 | TR-SIG-002 | `cnf.jwk` missing or malformed | Populate `cnf.jwk` with the OKP public key `{"kty":"OKP","crv":"Ed25519","x":"..."}` — `sign_record()` does this automatically |
 | TR-SIG-003 | Signature verification failed | Re-sign the record with `sign_record(record, key)`; the record fields must not have changed after signing |
-| TR-SIG-004 | Private key material (`d` member) found in `cnf.jwk` | Remove the `d` field before embedding the JWK; `key_to_jwk()` returns the public-only form |
+| TR-SIG-004 | `cnf.jwk` carries private key material (a `d` member), or `cnf.jwk.kty` is missing or names an unsupported key type (`OKP` and `EC` are accepted) | Remove `d` and embed only the public form of the JWK; `key_to_jwk()` returns it. For key type, use `OKP` or `EC`; Ed25519 signature verification additionally requires `kty: "OKP"` with `crv: "Ed25519"`, and a supported key that is not that pair passes this check and fails TR-SIG-005 |
+| TR-SIG-005 | The signature check outcome: the Ed25519 verification result, a signature that cannot be verified, a signature left unchecked because `cnf.jwk` carried private key material, or no signature at all. With no signature it is FAIL at Level 1 and above and `UNVERIFIED` at Level 0, which is not a pass | Sign the record with `sign_record(record, key)` and do not change the signed fields afterwards. An unsigned record is reported as unverified rather than skipped, so it cannot be read as a benign omission |
 
 ## TR-RTE — Runtime
 
 | Code | Description | How to fix |
 |------|-------------|------------|
-| TR-RTE-001 | `runtime.platform` is not a recognised TEE enum value | Use one of: `software-only`, `tpm2`, `sev-snp`, `tdx`, `opaque` |
+| TR-RTE-001 | `runtime` is missing or not an object, or `runtime.platform` is not in the registered set, or is `software-only` at Level 1 and above | Use a value from the `runtime.platform` enum in `schemas/trace-claim.json`. `software-only` carries no hardware attestation evidence and is accepted only at Level 0 |
 | TR-RTE-002 | `runtime.measurement` is not a valid `sha256:` digest | Provide a 64-character hex digest prefixed with `sha256:`; for Level 0 all-zeros is conventional |
-| TR-RTE-003 | RIM URI present but does not resolve to a valid reference image | Remove `runtime.rim_uri` if not using a RIM, or ensure the URI returns a valid reference manifest over HTTPS |
+| TR-RTE-003 | `runtime.rim_uri` is present and is not an `https://` URI | Remove `runtime.rim_uri` if not using a RIM, or set it to an `https://` URI. The URI is not resolved and the manifest behind it is not checked; this is a format check |
 
 ## TR-POL — Policy
 
 | Code | Description | How to fix |
 |------|-------------|------------|
 | TR-POL-001 | `policy.bundle_hash` is not a valid `sha256:` digest | Compute `sha256:` + hex digest of your Cedar policy bundle bytes |
-| TR-POL-002 | `policy.enforcement_mode` is not `enforce`, `advisory`, or `silent` | Replace `"strict"` or `"monitor"` with `"enforce"`, `"advisory"`, or `"silent"` |
+| TR-POL-002 | `policy.enforcement_mode` is not `enforce`, `advisory`, `silent`, or `declared` | Replace `"strict"` or `"monitor"` with one of the four accepted values; `"declared"` is the honest value for a producer that binds a policy without evaluating it |
 
 ## TR-TXN — Transcript
 
@@ -46,8 +47,7 @@ All TRACE test failures emit a structured error code of the form `TR-<MODULE>-<N
 
 | Code | Description | How to fix |
 |------|-------------|------------|
-| TR-ANC-001 | `transparency` field missing or empty | Submit the record to a SCITT transparency log and set `transparency` to the returned receipt URI |
-| TR-ANC-002 | `transparency` URI does not use `https://` scheme | Only `https://` URIs are accepted; update the URI or use the agentrust registry at `https://registry.agentrust-io.com` |
+| TR-ANC-001 | `transparency` is absent or empty, is not a string, or is not an `https://` URI with a host | Submit the record to a SCITT transparency log and set `transparency` to the returned receipt URI. The URI is not resolved and the receipt behind it is not fetched; this is a format check |
 
 ## TR-SCA — Provenance
 
