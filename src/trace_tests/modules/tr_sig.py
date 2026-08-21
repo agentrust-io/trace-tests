@@ -51,6 +51,14 @@ def _canonical_json(d: dict[str, Any]) -> bytes:
 
 
 def _verify_ed25519(pub_x: str, sig_b64: str, body: bytes) -> tuple[bool, str]:
+    """Verify *sig_b64* over *body*, returning ``(ok, message)``.
+
+    The messages name no error code. Two callers attach them to findings, ``check``
+    under TR-SIG-005 and ``check_cmcp_runtime`` under TR-SIG-001, so a code written
+    here would contradict one of them and, before this, contradicted both: a
+    malformed signature was published as a TR-SIG-005 finding whose text read
+    "TR-SIG-003". The finding's ``code`` is the only place a code belongs.
+    """
     try:
         from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
         from cryptography.exceptions import InvalidSignature
@@ -61,18 +69,18 @@ def _verify_ed25519(pub_x: str, sig_b64: str, body: bytes) -> tuple[bool, str]:
         pub_bytes = _b64url_decode(pub_x)
         pub_key = Ed25519PublicKey.from_public_bytes(pub_bytes)
     except Exception as exc:
-        return False, f"TR-SIG-002: invalid public key in cnf.jwk.x: {exc}"
+        return False, f"invalid public key in cnf.jwk.x: {exc}"
 
     try:
         sig_bytes = _b64url_decode(sig_b64)
     except Exception as exc:
-        return False, f"TR-SIG-003: invalid base64url signature: {exc}"
+        return False, f"invalid base64url signature: {exc}"
 
     try:
         pub_key.verify(sig_bytes, body)
         return True, "Ed25519 signature verified"
     except InvalidSignature:
-        return False, "TR-SIG-001: signature verification failed"
+        return False, "signature verification failed"
 
 
 def _jwk_of(container: Any) -> dict[str, Any]:

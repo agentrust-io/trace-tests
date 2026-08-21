@@ -11,6 +11,7 @@ as verified. Nothing checked it, which is why all of it survived.
 """
 from __future__ import annotations
 
+import ast
 import json
 import pathlib
 import re
@@ -33,14 +34,48 @@ def _codes(text: str) -> set[str]:
     return set(_CODE.findall(text))
 
 
+def _codes_in_code(source: str) -> set[str]:
+    """Codes that appear in a module's string literals, ignoring prose about them.
+
+    Comments and docstrings are not the module naming a code, they are the module
+    talking about one. Counting them let a code stay "named" after its last real use
+    was removed: a docstring in ``tr_sig`` explaining why ``TR-SIG-003`` must not
+    appear in a message was, on its own, enough to keep the deleted code looking
+    alive. ``ast`` drops comments, and module, class and function docstrings are
+    skipped explicitly.
+    """
+    tree = ast.parse(source)
+    docstrings = set()
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+            body = getattr(node, "body", None)
+            if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant) \
+                    and isinstance(body[0].value.value, str):
+                docstrings.add(id(body[0].value))
+
+    found: set[str] = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Constant) or not isinstance(node.value, str):
+            continue
+        if id(node) in docstrings:
+            continue
+        found |= _codes(node.value)
+    return found
+
+
 def test_the_code_set_named_by_the_modules_matches_the_code_set_documented() -> None:
     """Matched on codes *named in* module source, not on what a ``Finding`` carries.
 
-    Those two sets differ today. ``TR-SIG-003`` appears only inside a message string
-    that a ``TR-SIG-005`` finding carries, so it is never a ``Finding.code``. Matching
-    on ``Finding.code`` would demand deleting a page entry that documents a real
-    condition. Reconciling code and message is a change to the module rather than to
-    the documentation, and is not attempted here.
+    Those two sets are the same today, measured, and were not: ``TR-SIG-003`` used to
+    appear only inside a message string that a ``TR-SIG-005`` finding carried, so it
+    was never a ``Finding.code``, and matching on ``Finding.code`` would have demanded
+    deleting a row that documented a real condition. The branch that removed that
+    prefix closed the gap. The match stays on literals anyway: this reads source text
+    and cannot tell which literal reaches a ``Finding``, and a message naming its own
+    code is the convention here rather than a defect.
+
+    Codes are read from string literals via ``ast``, not from the file text, so a
+    comment or docstring about a code does not count as naming it.
 
     This is set membership in both directions and nothing more. It cannot tell whether
     a row describes what its code reports, which was a second kind of drift and was
@@ -50,7 +85,7 @@ def test_the_code_set_named_by_the_modules_matches_the_code_set_documented() -> 
     """
     named = set()
     for path in sorted(MODULES.glob("*.py")):
-        named |= _codes(path.read_text(encoding="utf-8"))
+        named |= _codes_in_code(path.read_text(encoding="utf-8"))
     # A row, not a mention. A code named in passing somewhere on the page is not
     # documented, and treating it as documented would let the check be satisfied
     # by prose that tells a reader nothing.
