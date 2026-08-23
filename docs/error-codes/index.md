@@ -27,6 +27,7 @@ All TRACE test failures emit a structured error code of the form `TR-<MODULE>-<N
 | TR-RTE-001 | `runtime` is missing or not an object, or `runtime.platform` is not in the registered set, or is `software-only` at Level 1 and above | Use a value from the `runtime.platform` enum in `schemas/trace-claim.json`. `software-only` carries no hardware attestation evidence and is accepted only at Level 0   |
 | TR-RTE-002 | `runtime.measurement` is not a valid `sha256:` digest                                                                                 | Provide a 64-character hex digest prefixed with `sha256:`; for Level 0 all-zeros is conventional                                                                       |
 | TR-RTE-003 | `runtime.rim_uri` is present and is not an `https://` URI                                                                             | Remove `runtime.rim_uri` if not using a RIM, or set it to an `https://` URI. The URI is not resolved and the manifest behind it is not checked; this is a format check |
+| TR-RTE-004 | Level 1+ verification is missing the verifier challenge nonce or the nonce does not match                                             | Supply the verifier's expected nonce and require the attested runtime nonce to match it                                                                                |
 
 ## TR-POL — Policy
 

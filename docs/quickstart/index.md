@@ -80,8 +80,8 @@ Level 0 is software-only (development). Level 1 requires TEE attestation. Level 
 
 ```
 trace-tests verify --record sample-record.json --level 0
-trace-tests verify --record sample-record.json --level 1
-trace-tests verify --record sample-record.json --level 2
+trace-tests verify --record sample-record.json --level 1 --expected-nonce "$VERIFIER_CHALLENGE"
+trace-tests verify --record sample-record.json --level 2 --expected-nonce "$VERIFIER_CHALLENGE"
 ```
 
 The sample fixture passes Level 0. Levels 1 and 2 will fail on runtime attestation and transparency fields — that is expected. See [Trust Levels](https://tests.agentrust-io.com/docs/levels/index.md) for what each level requires.
