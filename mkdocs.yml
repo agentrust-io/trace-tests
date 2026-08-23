@@ -170,6 +170,7 @@ nav:
   - Error Codes: docs/error-codes.md
   - Self-verification: measurement/REPORT.md
   - Project:
+      - Sponsors: SPONSORS.md
       - Changelog: CHANGELOG.md
       - Contributing: CONTRIBUTING.md
       - Code of Conduct: CODE_OF_CONDUCT.md
