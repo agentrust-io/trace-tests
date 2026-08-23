@@ -27,6 +27,7 @@ All TRACE test failures emit a structured error code of the form `TR-<MODULE>-<N
 | TR-RTE-001 | `runtime.platform` is not a recognised TEE enum value | Use one of: `software-only`, `tpm2`, `sev-snp`, `tdx`, `opaque` |
 | TR-RTE-002 | `runtime.measurement` is not a valid `sha256:` digest | Provide a 64-character hex digest prefixed with `sha256:`; for Level 0 all-zeros is conventional |
 | TR-RTE-003 | RIM URI present but does not resolve to a valid reference image | Remove `runtime.rim_uri` if not using a RIM, or ensure the URI returns a valid reference manifest over HTTPS |
+| TR-RTE-004 | Level 1+ verification is missing the verifier challenge nonce or the nonce does not match | Supply the verifier's expected nonce and require the attested runtime nonce to match it |
 
 ## TR-POL — Policy
 
