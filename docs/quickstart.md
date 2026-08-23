@@ -97,15 +97,20 @@ The sample fixture passes Level 0. Levels 1 and 2 will fail on runtime attestati
 
 ## Output format
 
-Each test emits a structured result:
+Each finding prints its **module**, its status, and its message:
 
 ```
-TR-ENV-001  PASS  EAT envelope: eat_profile present
-TR-SIG-001  PASS  Signature: Ed25519 algorithm confirmed
-TR-RTE-001  FAIL  Runtime: TEE measurement missing (required at level 1)
+  TR-ENV  PASS        eat_profile sentinel matches
+  TR-ENV  PASS        cnf.jwk.kty present ('EC')
+  TR-SIG  PASS        cnf.jwk key type is supported (kty='EC', crv='P-256')
+  TR-SIG  UNVERIFIED  TR-SIG-005: no signature present; this record is NOT cryptographically verified
+  TR-POL  PASS        policy.bundle_hash has valid digest format
 ```
 
-Error codes follow the form `TR-<MODULE>-<NNN>`.
+Error codes follow the form `TR-<MODULE>-<NNN>`. A failing or unverified finding
+carries its code at the front of the message; a passing one usually does not, so the
+module column is what identifies a `PASS`. The JSON and HTML reports carry the code as
+its own field for every finding.
 
 ## Next steps
 
