@@ -35,7 +35,8 @@ Seven test modules covering the full specification: envelope structure, signatur
 
 ```bash
 pip install agentrust-trace-tests
-trace-tests verify --record path/to/trust-record.jwt --level 1
+trace-tests verify --record path/to/trust-record.jwt --level 1 \
+  --expected-nonce "$VERIFIER_CHALLENGE"
 ```
 
 ## A report you can hand to someone else

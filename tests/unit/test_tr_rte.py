@@ -1,8 +1,8 @@
 """Unit tests for TR-RTE module."""
 
 import pytest
+
 from trace_tests.modules.tr_rte import check
-from trace_tests.result import Status
 
 _VALID = {
     "runtime": {
@@ -19,8 +19,14 @@ def test_valid_runtime_passes():
 
 def test_azure_cvm_platform_passes():
     """azure-cvm-sev-snp is a recognized hardware platform (vTPM-rooted SEV-SNP)."""
-    trace = {"runtime": {"platform": "azure-cvm-sev-snp", "measurement": "sha384:" + "a" * 96}}
-    findings = check(trace, level=2)
+    trace = {
+        "runtime": {
+            "platform": "azure-cvm-sev-snp",
+            "measurement": "sha384:" + "a" * 96,
+            "nonce": "challenge",
+        }
+    }
+    findings = check(trace, level=2, expected_nonce="challenge")
     assert all(not f.failed() for f in findings), findings
 
 
@@ -69,3 +75,18 @@ def test_http_rim_uri_fails():
     trace = {"runtime": {**_VALID["runtime"], "rim_uri": "http://example.org/rim/tdx-v1"}}
     codes = {f.code for f in check(trace) if f.failed()}
     assert "TR-RTE-003" in codes, "plain http rim_uri must be rejected; https only"
+
+
+@pytest.mark.parametrize("level", [1, 2])
+def test_attested_levels_require_expected_nonce(level):
+    trace = {"runtime": {**_VALID["runtime"], "nonce": "record-chosen"}}
+    codes = {f.code for f in check(trace, level=level) if f.failed()}
+    assert "TR-RTE-004" in codes
+
+
+def test_nonce_mismatch_fails_and_match_passes():
+    trace = {"runtime": {**_VALID["runtime"], "nonce": "signed-nonce"}}
+    mismatch = check(trace, level=1, expected_nonce="verifier-challenge")
+    assert any(f.code == "TR-RTE-004" and f.failed() for f in mismatch)
+    match = check(trace, level=1, expected_nonce="signed-nonce")
+    assert any(f.code == "TR-RTE-004" and f.passed() for f in match)

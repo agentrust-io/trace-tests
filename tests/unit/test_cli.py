@@ -33,6 +33,12 @@ def test_unsigned_record_fails_level_1(fresh_level0_path):
     assert result.exit_code == 1, result.output
 
 
+def test_level_1_requires_verifier_nonce(fresh_level0_path):
+    result = CliRunner().invoke(main, ["verify", "--record", fresh_level0_path, "--level", "1"])
+    assert result.exit_code == 1, result.output
+    assert "requires the verifier's expected nonce" in result.output
+
+
 def test_unsigned_record_level_0_reports_unverified(fresh_level0_path):
     result = CliRunner().invoke(main, ["verify", "--record", fresh_level0_path, "--level", "0"])
     assert result.exit_code == 0, result.output
