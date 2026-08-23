@@ -230,7 +230,7 @@ def badge_svg(data: ReportData) -> str:
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{total}" height="20" '
         f'role="img" aria-label="{html.escape(left)}: {html.escape(right)}">'
-        f'<title>{html.escape(left)}: {html.escape(right)}</title>'
+        f"<title>{html.escape(left)}: {html.escape(right)}</title>"
         f'<rect width="{lw}" height="20" fill="#444"/>'
         f'<rect x="{lw}" width="{rw}" height="20" fill="{colour}"/>'
         f'<g fill="#fff" font-family="Verdana,DejaVu Sans,sans-serif" font-size="11">'
@@ -318,6 +318,7 @@ def to_html(data: ReportData) -> str:
     reproduce = (
         f"pip install agentrust-trace-tests=={e(data.suite_version)}\n"
         f"trace-tests verify --record &lt;your copy&gt; --level {top if top is not None else 0}"
+        + (" --expected-nonce &lt;verifier challenge&gt;" if top is not None and top >= 1 else "")
     )
 
     return f"""<!doctype html>
@@ -342,12 +343,12 @@ def to_html(data: ReportData) -> str:
 
 <h2>Levels</h2>
 <table><tr><th>Level</th><th>Name</th><th>Result</th><th>Detail</th></tr>
-{''.join(rows)}
+{"".join(rows)}
 </table>
 
 <h2>Findings</h2>
 <table><tr><th>Level</th><th>Module</th><th>Code</th><th>Status</th><th>Detail</th></tr>
-{''.join(finding_rows) or '<tr><td colspan="5">No findings.</td></tr>'}
+{"".join(finding_rows) or '<tr><td colspan="5">No findings.</td></tr>'}
 </table>
 
 <div class="note">

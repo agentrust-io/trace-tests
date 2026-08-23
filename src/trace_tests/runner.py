@@ -21,6 +21,7 @@ def run(
     fmt: str,
     level: int,
     max_age_seconds: int = tr_env.DEFAULT_MAX_AGE_SECONDS,
+    expected_nonce: str | None = None,
 ) -> dict[str, list[Finding]]:
     """Run all modules required for *level* and return findings keyed by module ID."""
     if level not in _LEVEL_MODULES:
@@ -41,7 +42,7 @@ def run(
         results["TR-POL"] = tr_pol.check(trace)
 
     if "TR-RTE" in active:
-        results["TR-RTE"] = tr_rte.check(trace, level)
+        results["TR-RTE"] = tr_rte.check(trace, level, expected_nonce=expected_nonce)
 
     if "TR-SCA" in active:
         results["TR-SCA"] = tr_sca.check(trace)

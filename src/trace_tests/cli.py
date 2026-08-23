@@ -89,7 +89,13 @@ def main() -> None:
 
 @main.command()
 @click.option("--record", required=True, type=click.Path(), help="Path to the trust record (JSON)")
-@click.option("--level", default=0, type=click.IntRange(0, 2), show_default=True, help="Conformance level to check (0, 1, or 2)")
+@click.option(
+    "--level",
+    default=0,
+    type=click.IntRange(0, 2),
+    show_default=True,
+    help="Conformance level to check (0, 1, or 2)",
+)
 @click.option(
     "--max-age",
     "max_age",
@@ -98,7 +104,12 @@ def main() -> None:
     show_default=True,
     help="Maximum allowed record age in seconds (iat freshness window)",
 )
-def verify(record: str, level: int, max_age: int) -> None:
+@click.option(
+    "--expected-nonce",
+    default=None,
+    help="Verifier-issued challenge nonce; required for Level 1 and Level 2.",
+)
+def verify(record: str, level: int, max_age: int, expected_nonce: str | None) -> None:
     """Verify a TRACE trust record against the conformance suite."""
     try:
         data, fmt = load_record(record)
@@ -106,7 +117,13 @@ def verify(record: str, level: int, max_age: int) -> None:
         click.echo(f"Error: {exc}", err=True)
         sys.exit(2)
 
-    results = run(data, fmt, level, max_age_seconds=max_age)
+    results = run(
+        data,
+        fmt,
+        level,
+        max_age_seconds=max_age,
+        expected_nonce=expected_nonce,
+    )
     exit_code = _print_report(record, fmt, level, results)
     sys.exit(exit_code)
 
@@ -140,6 +157,11 @@ def verify(record: str, level: int, max_age: int) -> None:
     help="Exit non-zero unless the record reaches this level. Omit to always exit 0, "
     "which is what you want when generating an artifact rather than gating on one.",
 )
+@click.option(
+    "--expected-nonce",
+    default=None,
+    help="Verifier-issued challenge nonce; required for Level 1 and Level 2.",
+)
 def report(
     record: str,
     max_level: int,
@@ -148,6 +170,7 @@ def report(
     json_out: str | None,
     badge_out: str | None,
     fail_under: int | None,
+    expected_nonce: str | None,
 ) -> None:
     """Produce a conformance report you can hand to someone else.
 
@@ -162,7 +185,13 @@ def report(
         sys.exit(2)
 
     results_by_level = {
-        level: run(data, fmt, level, max_age_seconds=max_age)
+        level: run(
+            data,
+            fmt,
+            level,
+            max_age_seconds=max_age,
+            expected_nonce=expected_nonce,
+        )
         for level in range(max_level + 1)
     }
 
@@ -201,9 +230,7 @@ def report(
     if fail_under is not None:
         top = built.highest_level
         if top is None or top < fail_under:
-            click.echo(
-                f"Result: below the required Level {fail_under}", err=True
-            )
+            click.echo(f"Result: below the required Level {fail_under}", err=True)
             sys.exit(1)
 
 

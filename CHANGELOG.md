@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## v0.5.1 — 2026-08-22
+
+- Level 1 and Level 2 verification now requires a verifier-issued challenge via
+  `--expected-nonce` and checks it against the signed `runtime.nonce` using
+  constant-time comparison. Previously nonce binding existed only as an
+  assertion over the repository's own pytest fixture; the shipped runner and
+  CLI could report conformance for a fresh signed record containing an
+  attacker-chosen or replayed nonce.
+
 ## v0.5.0 — 2026-08-09
 
 ### Added
