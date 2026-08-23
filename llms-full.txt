@@ -180,15 +180,17 @@ The sample fixture passes Level 0. Levels 1 and 2 will fail on runtime attestati
 
 ## Output format
 
-Each test emits a structured result:
+Each finding prints its **module**, its status, and its message:
 
 ```
-TR-ENV-001  PASS  EAT envelope: eat_profile present
-TR-SIG-001  PASS  Signature: Ed25519 algorithm confirmed
-TR-RTE-001  FAIL  Runtime: TEE measurement missing (required at level 1)
+  TR-ENV  PASS        eat_profile sentinel matches
+  TR-ENV  PASS        cnf.jwk.kty present ('EC')
+  TR-SIG  PASS        cnf.jwk key type is supported (kty='EC', crv='P-256')
+  TR-SIG  UNVERIFIED  TR-SIG-005: no signature present; this record is NOT cryptographically verified
+  TR-POL  PASS        policy.bundle_hash has valid digest format
 ```
 
-Error codes follow the form `TR-<MODULE>-<NNN>`.
+Error codes follow the form `TR-<MODULE>-<NNN>`. A failing or unverified finding carries its code at the front of the message; a passing one usually does not, so the module column is what identifies a `PASS`. The JSON and HTML reports carry the code as its own field for every finding.
 
 ## Next steps
 
@@ -261,8 +263,8 @@ Level 0 records are signed with a software key. The `runtime.platform` must be `
 - `eat_profile` missing or wrong value — TR-ENV-001
 - `runtime.platform` is a TEE value (e.g. `amd-sev-snp`) but Level 0 is requested — TR-RTE-001 does not apply, but TR-ENV still checks the envelope
 - `policy.enforcement_mode` is `"strict"` or `"monitor"` — TR-POL-002
-- `cnf.jwk` missing or contains private key material (`d` field) — TR-SIG-002, TR-SIG-004
-- Signature does not verify against `cnf.jwk` — TR-SIG-003
+- `cnf.jwk` missing, of an unsupported key type, or carrying private key material (`d`) — TR-SIG-004
+- Signature does not verify against `cnf.jwk` — TR-SIG-005
 
 ______________________________________________________________________
 
@@ -396,13 +398,12 @@ Tests Ed25519 signature binding on the TRACE Trust Record.
 
 ## Required at Level 0+
 
-| Test ID    | Description                                                                          | Positive Case                             | Negative Case                                         |
-| ---------- | ------------------------------------------------------------------------------------ | ----------------------------------------- | ----------------------------------------------------- |
-| TR-SIG-001 | Signature algorithm is Ed25519 (OKP crv=Ed25519)                                     | `{"kty":"OKP","crv":"Ed25519"}`           | ES256, RS256, missing `alg`                           |
-| TR-SIG-002 | `cnf.jwk` present and carries the public key                                         | JWK with `x` member set                   | missing `cnf`, missing `jwk`, missing `x`             |
-| TR-SIG-003 | Signature verifies over the canonical record bytes (RFC 8785 JCS)                    | valid Ed25519 signature                   | bit-flipped signature, wrong key                      |
-| TR-SIG-004 | `cnf.jwk` carries no private key material, and `cnf.jwk.kty` is a supported key type | JWK with `x` only, `kty` of `OKP` or `EC` | JWK with `d` present, missing `kty`, `RSA`            |
-| TR-SIG-005 | The signature check outcome: verified, unverifiable, not checked, or absent          | valid Ed25519 signature                   | bit-flipped signature, no signature, JWK carrying `d` |
+| Test ID    | Description                                                                          | Positive Case                              | Negative Case                                         |
+| ---------- | ------------------------------------------------------------------------------------ | ------------------------------------------ | ----------------------------------------------------- |
+| TR-SIG-001 | cmcp only: `signature` is present, and the Ed25519 verification outcome              | signed cmcp claim                          | missing or empty `signature`, bit-flipped signature   |
+| TR-SIG-002 | cmcp only: `cnf.jwk` is an OKP/Ed25519 key carrying `x`                              | JWK with `kty` OKP, `crv` Ed25519, `x` set | ES256, RS256, missing `x`                             |
+| TR-SIG-004 | `cnf.jwk` carries no private key material, and `cnf.jwk.kty` is a supported key type | JWK with `x` only, `kty` of `OKP` or `EC`  | JWK with `d` present, missing `kty`, `RSA`            |
+| TR-SIG-005 | The signature check outcome: verified, unverifiable, not checked, or absent          | valid Ed25519 signature                    | bit-flipped signature, no signature, JWK carrying `d` |
 
 # TR-RTE — Runtime
 
@@ -477,9 +478,8 @@ All TRACE test failures emit a structured error code of the form `TR-<MODULE>-<N
 
 | Code       | Description                                                                                                                                                                                                                                                                                              | How to fix                                                                                                                                                                                                                                                                                  |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| TR-SIG-001 | Signature algorithm is not Ed25519                                                                                                                                                                                                                                                                       | Generate an Ed25519 key (`generate_key()`) and re-sign; ES256 and RS256 are not accepted                                                                                                                                                                                                    |
-| TR-SIG-002 | `cnf.jwk` missing or malformed                                                                                                                                                                                                                                                                           | Populate `cnf.jwk` with the OKP public key `{"kty":"OKP","crv":"Ed25519","x":"..."}` — `sign_record()` does this automatically                                                                                                                                                              |
-| TR-SIG-003 | Signature verification failed                                                                                                                                                                                                                                                                            | Re-sign the record with `sign_record(record, key)`; the record fields must not have changed after signing                                                                                                                                                                                   |
+| TR-SIG-001 | In a `cmcp-runtime` envelope: `signature` is missing or empty, or the Ed25519 verification outcome for the claim                                                                                                                                                                                         | Sign the claim with an Ed25519 key and leave the signed fields unchanged. A plain TRACE record reports its signature outcome under TR-SIG-005, not here                                                                                                                                     |
+| TR-SIG-002 | In a `cmcp-runtime` envelope: `cnf.jwk` is not an OKP/Ed25519 key, or `cnf.jwk.x` is missing                                                                                                                                                                                                             | Populate `cnf.jwk` with the OKP public key `{"kty":"OKP","crv":"Ed25519","x":"..."}`; `sign_record()` does this automatically. A plain TRACE record reports key type under TR-SIG-004                                                                                                       |
 | TR-SIG-004 | `cnf.jwk` carries private key material (a `d` member), or `cnf.jwk.kty` is missing or names an unsupported key type (`OKP` and `EC` are accepted)                                                                                                                                                        | Remove `d` and embed only the public form of the JWK; `key_to_jwk()` returns it. For key type, use `OKP` or `EC`; Ed25519 signature verification additionally requires `kty: "OKP"` with `crv: "Ed25519"`, and a supported key that is not that pair passes this check and fails TR-SIG-005 |
 | TR-SIG-005 | The signature check outcome: the Ed25519 verification result, a signature that cannot be verified, a signature left unchecked because `cnf.jwk` carried private key material, or no signature at all. With no signature it is FAIL at Level 1 and above and `UNVERIFIED` at Level 0, which is not a pass | Sign the record with `sign_record(record, key)` and do not change the signed fields afterwards. An unsigned record is reported as unverified rather than skipped, so it cannot be read as a benign omission                                                                                 |
 
@@ -750,8 +750,8 @@ Common codes you will encounter:
 | ---------- | ------------------------- | ------------------------------------------------------ |
 | TR-ENV-001 | `eat_profile`             | Must be `tag:agentrust-io.com,2026:trace-v0.2`         |
 | TR-ENV-002 | `iat`                     | Must be a Unix timestamp in the last 24 hours          |
-| TR-SIG-001 | `signature`               | Signature missing or does not verify                   |
-| TR-SIG-002 | `cnf.jwk`                 | Key must be OKP/Ed25519                                |
+| TR-SIG-005 | `signature`               | Signature missing, unverifiable, or does not verify    |
+| TR-SIG-004 | `cnf.jwk`                 | Supported key type, and no private key material        |
 | TR-POL-001 | `policy.bundle_hash`      | Must match `sha256:<64 hex chars>`                     |
 | TR-POL-002 | `policy.enforcement_mode` | Must be `enforce`, `advisory`, `silent`, or `declared` |
 | TR-RTE-001 | `runtime.platform`        | Must be a registered TEE platform enum                 |

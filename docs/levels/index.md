@@ -60,8 +60,8 @@ Level 0 records are signed with a software key. The `runtime.platform` must be `
 - `eat_profile` missing or wrong value — TR-ENV-001
 - `runtime.platform` is a TEE value (e.g. `amd-sev-snp`) but Level 0 is requested — TR-RTE-001 does not apply, but TR-ENV still checks the envelope
 - `policy.enforcement_mode` is `"strict"` or `"monitor"` — TR-POL-002
-- `cnf.jwk` missing or contains private key material (`d` field) — TR-SIG-002, TR-SIG-004
-- Signature does not verify against `cnf.jwk` — TR-SIG-003
+- `cnf.jwk` missing, of an unsupported key type, or carrying private key material (`d`) — TR-SIG-004
+- Signature does not verify against `cnf.jwk` — TR-SIG-005
 
 ______________________________________________________________________
 
