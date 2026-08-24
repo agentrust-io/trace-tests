@@ -347,6 +347,7 @@ Level 2 adds tool transcript and transparency anchor requirements. The `transpar
 - `tool_transcript.hash` missing or not a valid `sha256:` digest — TR-TXN-001
 - `tool_transcript.call_count` negative or not an integer — TR-TXN-002
 - `transparency` is absent or empty, is not a string, or is not an `https://` URI with a host — TR-ANC-001
+- no anchor receipt was supplied, the receipt is malformed, or its inclusion proof does not reproduce the committed `merkle_root` — TR-ANC-002. A record cannot reach Level 2 on a URI alone: pass the receipt with `--receipt`
 
 ______________________________________________________________________
 
@@ -369,15 +370,15 @@ The certification program (launching 2027) will require Level 1 at minimum.
 
 The TRACE conformance suite is divided into seven modules. Each module maps to a section of the TRACE specification.
 
-| Module                                                                      | ID Prefix | Spec Section | What It Tests                                                                                |
-| --------------------------------------------------------------------------- | --------- | ------------ | -------------------------------------------------------------------------------------------- |
-| [Envelope](https://tests.agentrust-io.com/docs/modules/tr-env/index.md)     | TR-ENV    | §3.2         | `eat_profile` URI, `iat` validity, `subject` form, presence of `cnf.jwk.kty`                 |
-| [Signature](https://tests.agentrust-io.com/docs/modules/tr-sig/index.md)    | TR-SIG    | §3.2.1       | Private key leak detection, key type support, and the Ed25519 signature verification outcome |
-| [Runtime](https://tests.agentrust-io.com/docs/modules/tr-rte/index.md)      | TR-RTE    | §3.1         | TEE platform enum, measurement format, RIM URI scheme                                        |
-| [Policy](https://tests.agentrust-io.com/docs/modules/tr-pol/index.md)       | TR-POL    | §3.1         | Policy bundle hash format, enforcement mode values                                           |
-| [Transcript](https://tests.agentrust-io.com/docs/modules/tr-txn/index.md)   | TR-TXN    | §3.1         | Tool-call transcript hash binding                                                            |
-| [Transparency](https://tests.agentrust-io.com/docs/modules/tr-anc/index.md) | TR-ANC    | §3.2         | SCITT receipt URI form. The URI is not resolved and no inclusion proof is checked            |
-| [Provenance](https://tests.agentrust-io.com/docs/modules/tr-sca/index.md)   | TR-SCA    | §3.1         | SLSA provenance level and digest format                                                      |
+| Module                                                                      | ID Prefix | Spec Section | What It Tests                                                                                                                                                                              |
+| --------------------------------------------------------------------------- | --------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [Envelope](https://tests.agentrust-io.com/docs/modules/tr-env/index.md)     | TR-ENV    | §3.2         | `eat_profile` URI, `iat` validity, `subject` form, presence of `cnf.jwk.kty`                                                                                                               |
+| [Signature](https://tests.agentrust-io.com/docs/modules/tr-sig/index.md)    | TR-SIG    | §3.2.1       | Private key leak detection, key type support, and the Ed25519 signature verification outcome                                                                                               |
+| [Runtime](https://tests.agentrust-io.com/docs/modules/tr-rte/index.md)      | TR-RTE    | §3.1         | TEE platform enum, measurement format, RIM URI scheme                                                                                                                                      |
+| [Policy](https://tests.agentrust-io.com/docs/modules/tr-pol/index.md)       | TR-POL    | §3.1         | Policy bundle hash format, enforcement mode values                                                                                                                                         |
+| [Transcript](https://tests.agentrust-io.com/docs/modules/tr-txn/index.md)   | TR-TXN    | §3.1         | Tool-call transcript hash binding                                                                                                                                                          |
+| [Transparency](https://tests.agentrust-io.com/docs/modules/tr-anc/index.md) | TR-ANC    | §3.2         | SCITT receipt URI form (TR-ANC-001), and offline replay of the inclusion proof against the committed Merkle root when a receipt is supplied (TR-ANC-002). The URI itself is never resolved |
+| [Provenance](https://tests.agentrust-io.com/docs/modules/tr-sca/index.md)   | TR-SCA    | §3.1         | SLSA provenance level and digest format                                                                                                                                                    |
 
 # TR-ENV — Envelope
 
@@ -445,9 +446,10 @@ Tests transparency anchoring via SCITT.
 
 ## Required at Level 2+
 
-| Test ID    | Description                                                   | Positive Case                                 | Negative Case                                                            |
-| ---------- | ------------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------ |
-| TR-ANC-001 | `transparency` is an `https://` URI with a host. Not resolved | `https://transparency.example/entries/abc123` | missing field, empty string, non-string, `http://`, bare path, `ipfs://` |
+| Test ID    | Description                                                                                                                  | Positive Case                                                                | Negative Case                                                                                                                                                                                   |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TR-ANC-001 | `transparency` is an `https://` URI with a host. Not resolved                                                                | `https://transparency.example/entries/abc123`                                | missing field, empty string, non-string, `http://`, bare path, `ipfs://`                                                                                                                        |
+| TR-ANC-002 | The record's inclusion proof replays to the committed `merkle_root`, per RFC 9162 over an RFC 6962 tree. Offline, no network | a receipt whose `audit_path` reproduces `merkle_root` from the record's leaf | no receipt supplied, missing `leaf_index`/`audit_path`/`leaf_count`/`merkle_root`, non-hex audit node, out-of-range `leaf_index`, proof for a different record, record modified after anchoring |
 
 # TR-SCA — Provenance
 
@@ -508,9 +510,10 @@ All TRACE test failures emit a structured error code of the form `TR-<MODULE>-<N
 
 ## TR-ANC — Transparency
 
-| Code       | Description                                                                                 | How to fix                                                                                                                                                                                 |
-| ---------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| TR-ANC-001 | `transparency` is absent or empty, is not a string, or is not an `https://` URI with a host | Submit the record to a SCITT transparency log and set `transparency` to the returned receipt URI. The URI is not resolved and the receipt behind it is not fetched; this is a format check |
+| Code       | Description                                                                                                                               | How to fix                                                                                                                                                                                                                                                          |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TR-ANC-001 | `transparency` is absent or empty, is not a string, or is not an `https://` URI with a host                                               | Submit the record to a SCITT transparency log and set `transparency` to the returned receipt URI. The URI is not resolved and the receipt behind it is not fetched; this is a format check on the pointer, and TR-ANC-002 is what checks the anchor                 |
+| TR-ANC-002 | No anchor receipt was supplied, the receipt is malformed, or replaying its inclusion proof does not reproduce the committed `merkle_root` | Pass the receipt with `--receipt`. Without one, nothing proves the record is in the log the URI names, so Level 2 cannot pass. If a receipt is supplied and the proof does not verify, the record is not in that tree or it has been modified since it was anchored |
 
 ## TR-SCA — Provenance
 
