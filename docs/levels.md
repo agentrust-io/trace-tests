@@ -144,6 +144,7 @@ Level 2 adds tool transcript and transparency anchor requirements. The `transpar
 - `tool_transcript.hash` missing or not a valid `sha256:` digest — TR-TXN-001
 - `tool_transcript.call_count` negative or not an integer — TR-TXN-002
 - `transparency` is absent or empty, is not a string, or is not an `https://` URI with a host — TR-ANC-001
+- no anchor receipt was supplied, the receipt is malformed, or its inclusion proof does not reproduce the committed `merkle_root` — TR-ANC-002. A record cannot reach Level 2 on a URI alone: pass the receipt with `--receipt`
 
 ---
 

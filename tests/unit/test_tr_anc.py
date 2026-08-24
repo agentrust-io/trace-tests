@@ -3,9 +3,17 @@
 from trace_tests.modules.tr_anc import check
 
 
-def test_https_transparency_passes():
+def test_https_transparency_passes_the_shape_check_only():
+    """A well-formed URI clears TR-ANC-001 and cannot clear TR-ANC-002 alone.
+
+    Before #70 this asserted every finding passed, which is what let
+    ``https://example.invalid/nothing-here`` earn a Level 2 badge. The URI says
+    where the anchor lives; only a receipt shows the record is in it.
+    """
     findings = check({"transparency": "https://scitt.example.org/receipts/abc123"})
-    assert all(f.passed() for f in findings), findings
+    by_code = {f.code: f for f in findings}
+    assert by_code["TR-ANC-001"].passed()
+    assert by_code["TR-ANC-002"].failed()
 
 
 def test_http_transparency_fails():

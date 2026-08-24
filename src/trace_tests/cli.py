@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime as _dt
+import json
 import importlib.metadata
 import pathlib
 import sys
@@ -81,6 +82,28 @@ def _print_report(path: str, fmt: str, level: int, results: dict[str, list[Any]]
         return 1
 
 
+
+def _load_receipt(path: str | None) -> dict | None:
+    """Load and shape-check an anchor receipt, or return None when not supplied."""
+    if path is None:
+        return None
+    try:
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except OSError as exc:
+        click.echo(f"Error: cannot read receipt {path}: {exc}", err=True)
+        sys.exit(2)
+    except json.JSONDecodeError as exc:
+        click.echo(f"Error: receipt {path} is not valid JSON: {exc}", err=True)
+        sys.exit(2)
+    if not isinstance(data, dict):
+        click.echo(
+            f"Error: receipt {path} must be a JSON object, got {type(data).__name__}",
+            err=True,
+        )
+        sys.exit(2)
+    return data
+
 @click.group()
 @click.version_option(__version__)
 def main() -> None:
@@ -109,7 +132,17 @@ def main() -> None:
     default=None,
     help="Verifier-issued challenge nonce; required for Level 1 and Level 2.",
 )
-def verify(record: str, level: int, max_age: int, expected_nonce: str | None) -> None:
+@click.option(
+    "--receipt",
+    default=None,
+    type=click.Path(),
+    help=(
+        "Path to the anchor receipt (JSON) proving the record is included in the "
+        "transparency log. Required for TR-ANC-002 at Level 2: the transparency URI "
+        "says where the anchor lives, the receipt is what proves the record is in it."
+    ),
+)
+def verify(record: str, level: int, max_age: int, expected_nonce: str | None, receipt: str | None) -> None:
     """Verify a TRACE trust record against the conformance suite."""
     try:
         data, fmt = load_record(record)
@@ -117,12 +150,15 @@ def verify(record: str, level: int, max_age: int, expected_nonce: str | None) ->
         click.echo(f"Error: {exc}", err=True)
         sys.exit(2)
 
+    receipt_data = _load_receipt(receipt)
+
     results = run(
         data,
         fmt,
         level,
         max_age_seconds=max_age,
         expected_nonce=expected_nonce,
+        receipt=receipt_data,
     )
     exit_code = _print_report(record, fmt, level, results)
     sys.exit(exit_code)
@@ -162,6 +198,12 @@ def verify(record: str, level: int, max_age: int, expected_nonce: str | None) ->
     default=None,
     help="Verifier-issued challenge nonce; required for Level 1 and Level 2.",
 )
+@click.option(
+    "--receipt",
+    default=None,
+    type=click.Path(),
+    help="Path to the anchor receipt (JSON). Required for TR-ANC-002 at Level 2.",
+)
 def report(
     record: str,
     max_level: int,
@@ -171,6 +213,7 @@ def report(
     badge_out: str | None,
     fail_under: int | None,
     expected_nonce: str | None,
+    receipt: str | None,
 ) -> None:
     """Produce a conformance report you can hand to someone else.
 
@@ -184,6 +227,8 @@ def report(
         click.echo(f"Error: {exc}", err=True)
         sys.exit(2)
 
+    receipt_data = _load_receipt(receipt)
+
     results_by_level = {
         level: run(
             data,
@@ -191,6 +236,7 @@ def report(
             level,
             max_age_seconds=max_age,
             expected_nonce=expected_nonce,
+            receipt=receipt_data,
         )
         for level in range(max_level + 1)
     }
