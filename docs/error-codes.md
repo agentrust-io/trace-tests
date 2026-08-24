@@ -47,7 +47,8 @@ All TRACE test failures emit a structured error code of the form `TR-<MODULE>-<N
 
 | Code | Description | How to fix |
 |------|-------------|------------|
-| TR-ANC-001 | `transparency` is absent or empty, is not a string, or is not an `https://` URI with a host | Submit the record to a SCITT transparency log and set `transparency` to the returned receipt URI. The URI is not resolved and the receipt behind it is not fetched; this is a format check |
+| TR-ANC-001 | `transparency` is absent or empty, is not a string, or is not an `https://` URI with a host | Submit the record to a SCITT transparency log and set `transparency` to the returned receipt URI. The URI is not resolved and the receipt behind it is not fetched; this is a format check on the pointer, and TR-ANC-002 is what checks the anchor |
+| TR-ANC-002 | No anchor receipt was supplied, the receipt is malformed, or replaying its inclusion proof does not reproduce the committed `merkle_root` | Pass the receipt with `--receipt`. Without one, nothing proves the record is in the log the URI names, so Level 2 cannot pass. If a receipt is supplied and the proof does not verify, the record is not in that tree or it has been modified since it was anchored |
 
 ## TR-SCA — Provenance
 
