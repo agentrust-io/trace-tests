@@ -10,9 +10,10 @@ class Status(StrEnum):
     PASS = "pass"
     FAIL = "fail"
     SKIP = "skip"
-    # No cryptographic verification was possible. Distinct from SKIP so callers
-    # can never mistake an unverified record for a benign omission. Treated as
-    # a failure at any conformance level that requires signatures (level >= 1).
+    # The check could not be executed against the evidence the record cites.
+    # Distinct from SKIP so callers can never mistake an unverified check for a
+    # benign omission. Whether it fails the run is per-code, from the table in
+    # modules/unverified.py, rather than one rule over every unverified finding.
     UNVERIFIED = "unverified"
 
 

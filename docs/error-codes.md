@@ -35,6 +35,7 @@ All TRACE test failures emit a structured error code of the form `TR-<MODULE>-<N
 |------|-------------|------------|
 | TR-POL-001 | `policy.bundle_hash` is not a valid `sha256:` digest | Compute `sha256:` + hex digest of your Cedar policy bundle bytes |
 | TR-POL-002 | `policy.enforcement_mode` is not `enforce`, `advisory`, `silent`, or `declared` | Replace `"strict"` or `"monitor"` with one of the four accepted values; `"declared"` is the honest value for a producer that binds a policy without evaluating it |
+| TR-POL-003 | `policy.policy_uri` is not an absolute URI, or the bundle it resolves to does not have the digest `policy.bundle_hash` declares. Unverified when a resolver was supplied and the bundle could not be read; skipped when no `policy_uri` is present or no resolver was supplied | Point `policy_uri` at the bundle whose bytes hash to `bundle_hash`. A record that cites a bundle it cannot be checked against is reported as unverified rather than passed |
 
 ## TR-TXN — Transcript
 
