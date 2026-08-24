@@ -1,4 +1,4 @@
-"""The appraisal-resolution set proves itself: digests, referents, schema.
+"""The policy-resolution set proves itself: digests, referents, schema.
 
 No verifier resolves ``appraisal.policy_ref``, so there is no implementation to
 run these against. What can be checked — and is checked here — is that the set
@@ -25,7 +25,7 @@ from pathlib import Path
 import jsonschema
 import pytest
 
-VECTOR_DIR = Path(__file__).parent / "vectors" / "appraisal-resolution"
+VECTOR_DIR = Path(__file__).parent / "vectors" / "policy-resolution"
 SCHEMA_DIGEST_PATTERN = re.compile(r"^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})$")
 
 
@@ -188,7 +188,7 @@ def test_03_and_04_differ_in_kind_not_just_in_bytes() -> None:
     wholesale = _load(VECTOR_DIR / "04-digest-mismatch-different-object.json")
 
     a = (VECTOR_DIR / minimal["context"]["resolution"]["file"]).read_bytes()
-    b = (VECTOR_DIR / "policies" / "appraisal-policy-v1.json").read_bytes()
+    b = (VECTOR_DIR / "policies" / "policy-bundle-base.json").read_bytes()
     assert len(a) == len(b), "03's mutation should not change the object's length"
     assert sum(x != y for x, y in zip(a, b)) == 1, (
         "03 is the minimal-mutation vector; it must differ from the appraised "

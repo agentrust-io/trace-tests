@@ -28,7 +28,7 @@
     "appraisal": {
       "status": "affirming",
       "verifier": "https://verifier.example.org",
-      "policy_ref": "https://policy.example.org/appraisal/appraisal-policy-v2.json",
+      "policy_ref": "https://policy.example.org/bundles/policy-bundle-other.json",
       "timestamp": 1748000042
     },
     "transparency": "https://scitt.example.org/receipts/abc123def456",
@@ -43,10 +43,10 @@
     }
   },
   "context": {
-    "cited_uri": "https://policy.example.org/appraisal/appraisal-policy-v2.json",
+    "cited_uri": "https://policy.example.org/bundles/policy-bundle-other.json",
     "resolution": {
       "outcome": "resolved",
-      "file": "policies/appraisal-policy-v2.json",
+      "file": "policies/policy-bundle-other.json",
       "actual_sha256": "sha256:9dd48a5dc2efc67c3873a38c95aae17bc49345b48d09e6629f177ac0a5ff79cc"
     },
     "candidate_binding": {

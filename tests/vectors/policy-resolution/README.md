@@ -70,7 +70,7 @@ decides.
 > `contraindicated`, `none`. A deferred vector asserts only what the outcome may
 > **not** be — `must_not: "affirming"` — because reporting a check that was
 > never performed as affirming is the one thing every reading of the merged text
-> already rules out. `tests/test_appraisal_resolution_completeness.py` fails if
+> already rules out. `tests/test_policy_resolution_completeness.py` fails if
 > any vector reuses a status value as an outcome.
 
 ## The vectors
@@ -120,14 +120,14 @@ pair is not.
 ## Reproducing it
 
 ```
-python tests/vectors/appraisal-resolution/gen_appraisal_resolution.py
+python tests/vectors/policy-resolution/gen_policy_resolution.py
 ```
 
 Deterministic: no keys, no clock, no randomness, no network. The digests are
 SHA-256 over the exact bytes of the sibling files under `policies/`, so anyone
 holding only this directory can recompute every number in the set.
 
-`tests/test_appraisal_resolution_reproduces.py` holds the generator to
+`tests/test_policy_resolution_reproduces.py` holds the generator to
 byte-reproduction by regenerating into a temporary directory and comparing —
 not in place, which would compare the files to themselves and agree regardless.
 
@@ -153,7 +153,7 @@ policy digest stops matching, and the set fails on a clean clone.
   `agentrust-io/trace-spec#190`.
 
 Both are recorded as exact shortfalls in
-`tests/test_appraisal_resolution_completeness.py::KNOWN_SHORTFALLS`, which fails
+`tests/test_policy_resolution_completeness.py::KNOWN_SHORTFALLS`, which fails
 if the list changes without this file changing with it.
 
 ## Related

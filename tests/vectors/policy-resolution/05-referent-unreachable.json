@@ -28,7 +28,7 @@
     "appraisal": {
       "status": "affirming",
       "verifier": "https://verifier.example.org",
-      "policy_ref": "https://policy.example.org/appraisal/appraisal-policy-withdrawn.json",
+      "policy_ref": "https://policy.example.org/bundles/policy-bundle-withdrawn.json",
       "timestamp": 1748000042
     },
     "transparency": "https://scitt.example.org/receipts/abc123def456",
@@ -43,7 +43,7 @@
     }
   },
   "context": {
-    "cited_uri": "https://policy.example.org/appraisal/appraisal-policy-withdrawn.json",
+    "cited_uri": "https://policy.example.org/bundles/policy-bundle-withdrawn.json",
     "resolution": {
       "outcome": "unreachable",
       "file": null,

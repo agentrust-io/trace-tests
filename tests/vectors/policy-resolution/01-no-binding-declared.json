@@ -1,9 +1,9 @@
 {
-  "name": "resolved-and-matches",
-  "description": "The cited URI resolves and its bytes hash to exactly the declared candidate binding. The second must-accept vector, and the only one in which a resolution actually succeeds.",
+  "name": "no-binding-declared",
+  "description": "The record cites an appraisal policy by bare URI and declares no binding to what that URI held. This is every conformant record today, so it must keep verifying: a set that rejected it would be proposing a breaking change rather than describing a gap.",
   "boundary": "accept",
-  "defect": "none - positive control",
-  "spec": "agentrust-io/trace-spec docs/verification.md - a verifier records what it actually resolved, and evidence that resolves and contradicts fails the appraisal. Applied here to appraisal.policy_ref, which carries no digest.",
+  "defect": "none - backward-compatibility control",
+  "spec": "Mirrors the merged treatment of an undeclared depth in agentrust-io/trace-spec#173, where a record that never declared is read as surface rather than as a failure.",
   "record": {
     "eat_profile": "tag:agentrust-io.com,2026:trace-v0.2",
     "iat": 1748000000,
@@ -28,7 +28,7 @@
     "appraisal": {
       "status": "affirming",
       "verifier": "https://verifier.example.org",
-      "policy_ref": "https://policy.example.org/appraisal/appraisal-policy-v1.json",
+      "policy_ref": "https://policy.example.org/bundles/policy-bundle-base.json",
       "timestamp": 1748000042
     },
     "transparency": "https://scitt.example.org/receipts/abc123def456",
@@ -43,19 +43,15 @@
     }
   },
   "context": {
-    "cited_uri": "https://policy.example.org/appraisal/appraisal-policy-v1.json",
+    "cited_uri": "https://policy.example.org/bundles/policy-bundle-base.json",
     "resolution": {
-      "outcome": "resolved",
-      "file": "policies/appraisal-policy-v1.json",
-      "actual_sha256": "sha256:d8764863e75e702ff64e53951eb3d005a84858979598f7f0bda11fc901416adc"
+      "outcome": "not_attempted",
+      "note": "No binding is declared, so there is nothing to check."
     },
-    "candidate_binding": {
-      "field": "CANDIDATE:appraisal.policy_digest",
-      "value": "sha256:d8764863e75e702ff64e53951eb3d005a84858979598f7f0bda11fc901416adc"
-    }
+    "candidate_binding": null
   },
   "expected": {
     "outcome": "pass",
-    "reason": "Declared binding equals the digest of what resolved."
+    "reason": "No binding declared; nothing to contradict."
   }
 }

@@ -1,4 +1,4 @@
-"""Adequacy of the appraisal-resolution set, per the criteria on trace-spec#186.
+"""Adequacy of the policy-resolution set, per the criteria on trace-spec#186.
 
 agentrust-io/trace-spec#186 (merged 2026-08-20) states what a conformance
 vector set is claiming: *a verifier that does not implement these rules will
@@ -37,7 +37,7 @@ from pathlib import Path
 
 import pytest
 
-VECTOR_DIR = Path(__file__).parent / "vectors" / "appraisal-resolution"
+VECTOR_DIR = Path(__file__).parent / "vectors" / "policy-resolution"
 
 DECIDED_OUTCOMES = {"pass", "reject"}
 ALL_OUTCOMES = DECIDED_OUTCOMES | {"deferred"}

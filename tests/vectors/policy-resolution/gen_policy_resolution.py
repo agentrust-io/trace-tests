@@ -1,11 +1,11 @@
-"""Regenerate the appraisal-resolution vector set, byte for byte.
+"""Regenerate the policy-resolution vector set, byte for byte.
 
 Deterministic by construction: no keys, no clock, no randomness, no network.
 Running this on any machine with the same CPython minor version reproduces
 every file in this directory exactly, which is what
-``tests/test_appraisal_resolution_reproduces.py`` asserts.
+``tests/test_policy_resolution_reproduces.py`` asserts.
 
-    python tests/vectors/appraisal-resolution/gen_appraisal_resolution.py
+    python tests/vectors/policy-resolution/gen_policy_resolution.py
 
 The digests in the vectors are SHA-256 over the exact bytes of the sibling
 files under ``policies/``. Anyone holding only this directory can recompute
@@ -71,7 +71,7 @@ def sha3_512_of(data: bytes) -> str:
 # Small, ASCII-only, and shaped like an appraisal policy rather than a
 # placeholder, so a reader can see why swapping one for another matters.
 
-POLICY_V1 = {
+POLICY_BASE = {
     "policy_id": "appraisal/baseline",
     "version": "1.0.0",
     "rules": [
@@ -84,7 +84,7 @@ POLICY_V1 = {
 # One character apart from V1: the SLSA floor moves 2 -> 3. A verifier
 # applying this instead of V1 reaches a different verdict on the same record,
 # which is why a minimal mutation is the honest test rather than a cosmetic one.
-POLICY_V1_REV2 = {
+POLICY_ONEBYTE = {
     "policy_id": "appraisal/baseline",
     "version": "1.0.0",
     "rules": [
@@ -95,7 +95,7 @@ POLICY_V1_REV2 = {
 }
 
 # A legitimate later version, published at its own URI.
-POLICY_V2 = {
+POLICY_OTHER = {
     "policy_id": "appraisal/baseline",
     "version": "2.0.0",
     "rules": [
@@ -116,13 +116,13 @@ POLICY_UNRELATED = {
 }
 
 POLICY_FILES = {
-    "appraisal-policy-v1.json": POLICY_V1,
-    "appraisal-policy-v1-rev2.json": POLICY_V1_REV2,
-    "appraisal-policy-v2.json": POLICY_V2,
-    "unrelated-policy.json": POLICY_UNRELATED,
+    "policy-bundle-base.json": POLICY_BASE,
+    "policy-bundle-onebyte.json": POLICY_ONEBYTE,
+    "policy-bundle-other.json": POLICY_OTHER,
+    "policy-bundle-unrelated.json": POLICY_UNRELATED,
 }
 
-BASE_URI = "https://policy.example.org/appraisal/"
+BASE_URI = "https://policy.example.org/bundles/"
 
 # --- the record ------------------------------------------------------------
 # Every vector's record is identical except for appraisal.policy_ref, so the
@@ -210,14 +210,14 @@ def main(out_dir: Path | None = None) -> int:
         raw[name] = write_json(policies / name, obj)
         digests[name] = sha256_of(raw[name])
 
-    d_v1 = digests["appraisal-policy-v1.json"]
-    d_rev2 = digests["appraisal-policy-v1-rev2.json"]
-    d_v2 = digests["appraisal-policy-v2.json"]
-    d_unrel = digests["unrelated-policy.json"]
+    d_base = digests["policy-bundle-base.json"]
+    d_onebyte = digests["policy-bundle-onebyte.json"]
+    d_other = digests["policy-bundle-other.json"]
+    d_unrelated = digests["policy-bundle-unrelated.json"]
 
-    uri_v1 = BASE_URI + "appraisal-policy-v1.json"
-    uri_v2 = BASE_URI + "appraisal-policy-v2.json"
-    uri_withdrawn = BASE_URI + "appraisal-policy-withdrawn.json"
+    uri_base = BASE_URI + "policy-bundle-base.json"
+    uri_other = BASE_URI + "policy-bundle-other.json"
+    uri_withdrawn = BASE_URI + "policy-bundle-withdrawn.json"
 
     def resolved(file_name: str, digest: str) -> dict[str, object]:
         return {
@@ -242,9 +242,9 @@ def main(out_dir: Path | None = None) -> int:
                 "agentrust-io/trace-spec#173, where a record that never declared is "
                 "read as surface rather than as a failure."
             ),
-            "record": record_with(uri_v1),
+            "record": record_with(uri_base),
             "context": {
-                "cited_uri": uri_v1,
+                "cited_uri": uri_base,
                 "resolution": {
                     "outcome": "not_attempted",
                     "note": "No binding is declared, so there is nothing to check.",
@@ -266,11 +266,11 @@ def main(out_dir: Path | None = None) -> int:
             "boundary": "accept",
             "defect": "none - positive control",
             "spec": SPEC_DECIDED,
-            "record": record_with(uri_v1),
+            "record": record_with(uri_base),
             "context": {
-                "cited_uri": uri_v1,
-                "resolution": resolved("appraisal-policy-v1.json", d_v1),
-                "candidate_binding": {"field": CANDIDATE_FIELD, "value": d_v1},
+                "cited_uri": uri_base,
+                "resolution": resolved("policy-bundle-base.json", d_base),
+                "candidate_binding": {"field": CANDIDATE_FIELD, "value": d_base},
             },
             "expected": {
                 "outcome": "pass",
@@ -289,14 +289,14 @@ def main(out_dir: Path | None = None) -> int:
             "boundary": "contradicted",
             "defect": "cited object mutated minimally after appraisal",
             "spec": SPEC_DECIDED,
-            "record": record_with(uri_v1),
+            "record": record_with(uri_base),
             "context": {
-                "cited_uri": uri_v1,
-                "resolution": resolved("appraisal-policy-v1-rev2.json", d_rev2),
-                "candidate_binding": {"field": CANDIDATE_FIELD, "value": d_v1},
+                "cited_uri": uri_base,
+                "resolution": resolved("policy-bundle-onebyte.json", d_onebyte),
+                "candidate_binding": {"field": CANDIDATE_FIELD, "value": d_base},
                 "note": (
-                    "policies/appraisal-policy-v1.json and "
-                    "policies/appraisal-policy-v1-rev2.json differ in one character."
+                    "policies/policy-bundle-base.json and "
+                    "policies/policy-bundle-onebyte.json differ in one character."
                 ),
             },
             "expected": {
@@ -315,11 +315,11 @@ def main(out_dir: Path | None = None) -> int:
             "boundary": "contradicted",
             "defect": "cited object wholly replaced after appraisal",
             "spec": SPEC_DECIDED,
-            "record": record_with(uri_v1),
+            "record": record_with(uri_base),
             "context": {
-                "cited_uri": uri_v1,
-                "resolution": resolved("unrelated-policy.json", d_unrel),
-                "candidate_binding": {"field": CANDIDATE_FIELD, "value": d_v1},
+                "cited_uri": uri_base,
+                "resolution": resolved("policy-bundle-unrelated.json", d_unrelated),
+                "candidate_binding": {"field": CANDIDATE_FIELD, "value": d_base},
             },
             "expected": {
                 "outcome": "reject",
@@ -344,7 +344,7 @@ def main(out_dir: Path | None = None) -> int:
                     "file": None,
                     "note": "No sibling file corresponds to this URI, by construction.",
                 },
-                "candidate_binding": {"field": CANDIDATE_FIELD, "value": d_v1},
+                "candidate_binding": {"field": CANDIDATE_FIELD, "value": d_base},
             },
             "expected": {
                 "outcome": "deferred",
@@ -377,13 +377,13 @@ def main(out_dir: Path | None = None) -> int:
                 "draft, a surface facing this question rather than an "
                 "established answer to it - without adopting its vocabulary."
             ),
-            "record": record_with(uri_v2),
+            "record": record_with(uri_other),
             "context": {
-                "cited_uri": uri_v2,
-                "resolution": resolved("appraisal-policy-v2.json", d_v2),
+                "cited_uri": uri_other,
+                "resolution": resolved("policy-bundle-other.json", d_other),
                 "candidate_binding": {
                     "field": CANDIDATE_FIELD,
-                    "value": sha3_512_of(raw["appraisal-policy-v2.json"]),
+                    "value": sha3_512_of(raw["policy-bundle-other.json"]),
                     "note": (
                         "This is the correct SHA3-512 of the referent. It is "
                         "outside the schema's digest pattern "
@@ -416,15 +416,15 @@ def main(out_dir: Path | None = None) -> int:
             "boundary": "contradicted",
             "defect": "binding well formed but bound to a different referent",
             "spec": SPEC_DECIDED,
-            "record": record_with(uri_v1),
+            "record": record_with(uri_base),
             "context": {
-                "cited_uri": uri_v1,
-                "resolution": resolved("appraisal-policy-v1.json", d_v1),
+                "cited_uri": uri_base,
+                "resolution": resolved("policy-bundle-base.json", d_base),
                 "candidate_binding": {
                     "field": CANDIDATE_FIELD,
-                    "value": d_v2,
+                    "value": d_other,
                     "note": (
-                        "This is the digest of policies/appraisal-policy-v2.json, "
+                        "This is the digest of policies/policy-bundle-other.json, "
                         "which is not what cited_uri resolves to."
                     ),
                 },

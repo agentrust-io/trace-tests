@@ -1,8 +1,8 @@
 {
-  "name": "digest-mismatch-different-object",
-  "description": "The cited URI resolves to an unrelated policy document. Paired with 03 so the boundary is not carried by a single vector: a verifier that only samples a prefix of the document, or compares lengths, passes one of these two and fails the other.",
+  "name": "digest-bound-to-other-referent",
+  "description": "The declared binding is well formed and is the true digest of a real object in this set - version 2 - while policy_ref cites version 1. Both halves are individually valid and the pair is not. A verifier that checks the digest is well formed, or that it matches something it holds, passes this; only one that checks the digest against what this URI resolved to rejects it.",
   "boundary": "contradicted",
-  "defect": "cited object wholly replaced after appraisal",
+  "defect": "binding well formed but bound to a different referent",
   "spec": "agentrust-io/trace-spec docs/verification.md - a verifier records what it actually resolved, and evidence that resolves and contradicts fails the appraisal. Applied here to appraisal.policy_ref, which carries no digest.",
   "record": {
     "eat_profile": "tag:agentrust-io.com,2026:trace-v0.2",
@@ -28,7 +28,7 @@
     "appraisal": {
       "status": "affirming",
       "verifier": "https://verifier.example.org",
-      "policy_ref": "https://policy.example.org/appraisal/appraisal-policy-v1.json",
+      "policy_ref": "https://policy.example.org/bundles/policy-bundle-base.json",
       "timestamp": 1748000042
     },
     "transparency": "https://scitt.example.org/receipts/abc123def456",
@@ -43,19 +43,20 @@
     }
   },
   "context": {
-    "cited_uri": "https://policy.example.org/appraisal/appraisal-policy-v1.json",
+    "cited_uri": "https://policy.example.org/bundles/policy-bundle-base.json",
     "resolution": {
       "outcome": "resolved",
-      "file": "policies/unrelated-policy.json",
-      "actual_sha256": "sha256:23905737177574be26e1212264b88ffe81e06e99aab1fe6115ebbb2e9205109c"
+      "file": "policies/policy-bundle-base.json",
+      "actual_sha256": "sha256:d8764863e75e702ff64e53951eb3d005a84858979598f7f0bda11fc901416adc"
     },
     "candidate_binding": {
       "field": "CANDIDATE:appraisal.policy_digest",
-      "value": "sha256:d8764863e75e702ff64e53951eb3d005a84858979598f7f0bda11fc901416adc"
+      "value": "sha256:9dd48a5dc2efc67c3873a38c95aae17bc49345b48d09e6629f177ac0a5ff79cc",
+      "note": "This is the digest of policies/policy-bundle-other.json, which is not what cited_uri resolves to."
     }
   },
   "expected": {
     "outcome": "reject",
-    "reason": "Resolved bytes contradict the declared binding."
+    "reason": "The binding does not describe the object the record cites, even though it describes some object."
   }
 }
