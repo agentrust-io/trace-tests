@@ -77,7 +77,8 @@ def _print_report(path: str, fmt: str, level: int, results: dict[str, list[Any]]
         if unverified:
             click.echo(
                 f"Result: PASS  ({total} checks, {skips} skipped, {unverified} UNVERIFIED "
-                f"-- record is NOT cryptographically verified)"
+                f"-- {unverified} check(s) could not be executed against the evidence "
+                f"this record cites)"
             )
         else:
             click.echo(f"Result: PASS  ({total} checks, {skips} skipped)")

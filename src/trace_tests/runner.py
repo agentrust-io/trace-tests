@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 from trace_tests.loader import extract_trace
@@ -23,6 +24,7 @@ def run(
     max_age_seconds: int = tr_env.DEFAULT_MAX_AGE_SECONDS,
     expected_nonce: str | None = None,
     receipt: dict[str, Any] | None = None,
+    policy_resolver: Callable[[str], bytes] | None = None,
 ) -> dict[str, list[Finding]]:
     """Run all modules required for *level* and return findings keyed by module ID."""
     if level not in _LEVEL_MODULES:
@@ -40,7 +42,7 @@ def run(
         results["TR-SIG"] = tr_sig.check(trace, record, fmt, level)
 
     if "TR-POL" in active:
-        results["TR-POL"] = tr_pol.check(trace)
+        results["TR-POL"] = tr_pol.check(trace, policy_resolver=policy_resolver)
 
     if "TR-RTE" in active:
         results["TR-RTE"] = tr_rte.check(trace, level, expected_nonce=expected_nonce)
