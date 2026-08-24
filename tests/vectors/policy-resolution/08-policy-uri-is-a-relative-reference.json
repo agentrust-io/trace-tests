@@ -1,8 +1,8 @@
 {
-  "name": "resolved-and-matches",
-  "description": "The bundle at policy_uri hashes to exactly what bundle_hash declares. The positive control: a set that could not pass this would reject every honest record.",
-  "boundary": "accept",
-  "defect": "none - positive control, sha256",
+  "name": "policy-uri-is-a-relative-reference",
+  "description": "policy_uri is a uri-reference rather than the absolute URI the schema asks for. No network is needed to see it: this is a defect in the record, and it is reported the same way with or without a resolver.",
+  "boundary": "malformed",
+  "defect": "reference is relative, not the absolute URI the schema asks for",
   "record": {
     "eat_profile": "tag:agentrust-io.com,2026:trace-v0.2",
     "iat": 1748000000,
@@ -19,7 +19,7 @@
     "policy": {
       "bundle_hash": "sha256:d8764863e75e702ff64e53951eb3d005a84858979598f7f0bda11fc901416adc",
       "enforcement_mode": "enforce",
-      "policy_uri": "https://policy.example.org/bundles/policy-bundle-base.json"
+      "policy_uri": "bundles/policy-bundle-base.json"
     },
     "data_class": "confidential",
     "build_provenance": {
@@ -44,19 +44,19 @@
     }
   },
   "context": {
-    "cited_uri": "https://policy.example.org/bundles/policy-bundle-base.json",
+    "cited_uri": "bundles/policy-bundle-base.json",
     "resolution": {
-      "outcome": "resolved"
+      "outcome": "not_attempted"
     },
     "anchor": {
-      "tier": 1,
-      "source": "agentrust-io/trace-spec spec/trace-v0.2.md 4.3",
-      "text": "the policy bundle hash is sealed to the TEE measurement, the enforcement mode is recorded, and substituting the policy invalidates the runtime claim",
-      "applies": "Read the other way: the bundle that resolves is the bundle that was sealed, so nothing was substituted and the claim stands."
+      "tier": 2,
+      "source": "schemas/trace-claim.json properties.policy.properties.policy_uri",
+      "text": "URI to the policy bundle for verification.",
+      "applies": "The schema asks for format: uri, which is the absolute form. A reference the record got wrong is a defect in the record, visible with no network. This is a conformance statement about the packaged schema, not a claim about the specification, which says nothing about policy_uri at all."
     }
   },
   "expected": {
-    "tr_pol_003": "pass",
-    "reason": "The resolved bytes hash to the declared digest."
+    "tr_pol_003": "fail",
+    "reason": "A relative reference names no authority, so no verifier can dereference it on its own."
   }
 }

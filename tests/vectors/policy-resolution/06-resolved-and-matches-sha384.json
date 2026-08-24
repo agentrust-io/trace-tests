@@ -1,8 +1,8 @@
 {
-  "name": "resolved-and-matches",
-  "description": "The bundle at policy_uri hashes to exactly what bundle_hash declares. The positive control: a set that could not pass this would reject every honest record.",
+  "name": "resolved-and-matches-sha384",
+  "description": "The same accept as 02, with the digest taken in sha384. The schema admits both algorithms, so a verifier that hardcodes sha256 is wrong rather than merely limited, and this is the vector that says so.",
   "boundary": "accept",
-  "defect": "none - positive control, sha256",
+  "defect": "none - positive control, sha384",
   "record": {
     "eat_profile": "tag:agentrust-io.com,2026:trace-v0.2",
     "iat": 1748000000,
@@ -17,7 +17,7 @@
       "nonce": "Zm9yLXRoZS1yZWNvcmQtbm9uY2U"
     },
     "policy": {
-      "bundle_hash": "sha256:d8764863e75e702ff64e53951eb3d005a84858979598f7f0bda11fc901416adc",
+      "bundle_hash": "sha384:fac86d58e1ef453e686c343d00ceefe1cac7c4a195d5a2fc85e2ca7b54e356cf90a1402950a963ea304297d0d9d33ede",
       "enforcement_mode": "enforce",
       "policy_uri": "https://policy.example.org/bundles/policy-bundle-base.json"
     },
@@ -57,6 +57,6 @@
   },
   "expected": {
     "tr_pol_003": "pass",
-    "reason": "The resolved bytes hash to the declared digest."
+    "reason": "The resolved bytes hash to the declared sha384 digest."
   }
 }

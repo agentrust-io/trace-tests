@@ -1,121 +1,144 @@
-# Appraisal-resolution vectors
+# Policy-resolution vectors
 
-Candidate conformance vectors for one question: **when a record cites an
-appraisal policy by URI, what can a second verifier confirm about what that URI
-held?**
+Conformance vectors for one question: **when a record declares a policy bundle
+digest and says where the bundle lives, does the bundle at that location
+actually hash to what was declared?**
 
-Today, nothing. `appraisal.policy_ref` is a bare URI. The record carries a
-digest for the enforcement policy bundle (`policy.bundle_hash`) and none for the
-appraisal policy that produced the verdict, so two verifiers resolving the same
-`policy_ref` at different times can retrieve different documents and both report
-`affirming` honestly.
+Until `TR-POL-003`, nothing asked. `policy.bundle_hash` and `policy.policy_uri`
+are both merged fields on `policy`, and no module compared them, so a record
+could name a bundle, declare a digest, and have the two disagree without any
+check noticing.
 
-## Why this set exists
+## What each vector asserts
 
-`agentrust-io/trace-tests#63` proposed a conformance module for the `appraisal`
-claim, noting that `policy_ref` can be checked for well-formedness only, "since
-the record carries no digest to compare a resolved policy against." Building
-those cases ran into the boundary itself, which was stated on
-`agentrust-io/trace-spec#66` on 2026-08-18:
+**One value: the status of the `TR-POL-003` finding.** That is narrower than a
+verdict on the whole record, deliberately. These records are unsigned, so they
+carry findings from other modules — `TR-SIG-005` has an opinion about every one
+of them — and grading at record level would blur the check under test with
+everything standing around it. Every claim about coverage in this file is a
+claim about that one finding.
 
-> `appraisal.policy_ref` can be checked for well-formedness, but not
-> reproduced: the record carries nothing stating what the referent was, so a
-> conformance module can confirm the URI parses and nothing more. Two verifiers
-> resolving the same `policy_ref` at different times can retrieve different
-> documents and both honestly report verified — the federation gap §1 names,
-> one hop from the record.
+## Anchors: what each expected outcome derives from
 
-Drafting candidate fixtures for it was accepted on that thread the same day,
-with the shape asked for: candidates in `trace-tests`, one defect per vector,
-expected outcomes committed beside the vectors, and the schema and
-`verification.md` text left maintainer-authored. This set is that.
+Every vector names the text its expected outcome comes from, and says which
+surface that text lives on.
 
-## What it does not do
+| Tier | Surface | What it can ground |
+|---|---|---|
+| 1 | Merged prose in `agentrust-io/trace-spec` `spec/trace-v0.2.md` | A claim about what the specification requires |
+| 2 | The packaged `schemas/trace-claim.json` | A claim about conformance to the schema this suite tests against |
+| 0 | Nothing governs the case | Only a fact about the run itself |
 
-**It does not propose a schema change.** `candidate_binding` is a *candidate
-shape*, marked `CANDIDATE:` in every vector, and it lives in the vector's
-`context` — never inside `record`. The packaged schema sets
-`additionalProperties: false` on `appraisal`, so a record carrying an extra
-field would be schema-invalid; whether a binding field lands, and what it is
-called, is an editorial decision.
+The distinction matters because schema `description` text reads exactly like
+normative prose and sits in the same repository as the vectors. It is not the
+specification. Where a vector's outcome rests on tier 2, it says so rather than
+implying an authority it does not have.
 
-**It does not name an outcome value for the unresolvable case.** Vectors 05 and
-06 are marked `deferred`, pointing at `agentrust-io/trace-spec#190`, which
-tracks the open cross-surface question: *when a record cites something a
-verifier cannot resolve, what does the verifier record, and where.*
-
-Four surfaces face that question. Only one has answered it:
-`build_provenance`, with a recorded field plus a floor
-(`agentrust-io/trace-spec#173`, **merged**). Revocation states the prohibition
-in prose with no field to record the outcome in
-(`agentrust-io/trace-spec#187`, **merged**). Delegation links **propose**
-`unverifiable` on a separate axis (`agentrust-io/trace-spec#184`, **an
-explicitly non-normative draft** — a proposal facing the question, not an
-established answer; its author has said so on
-`agentrust-io/trace-spec#190`). And this one.
-
-The divergence is a schema fact rather than four differing opinions:
-`appraisal` is `additionalProperties: false`, and `#173` landed the only
-claimed/verified pair that exists, so the other surfaces had no field to use.
-Coining a fifth answer here is exactly what `agentrust-io/trace-spec#190`
-exists to prevent — and a new field or a fifth `appraisal.status` value is
-normative under `CONTRIBUTING.md`, which routes it through a Spec change
-proposal with a sponsoring organization. It is not something a vector set
-decides.
-
-> **`deferred` is fixture bookkeeping, not a proposed appraisal vocabulary
-> value.** It is a property of a *vector's expected block*, recording that the
-> outcome is not yet decided upstream. It is **not** a candidate value for
-> `appraisal.status`, which is closed at `affirming`, `warning`,
-> `contraindicated`, `none`. A deferred vector asserts only what the outcome may
-> **not** be — `must_not: "affirming"` — because reporting a check that was
-> never performed as affirming is the one thing every reading of the merged text
-> already rules out. `tests/test_policy_resolution_completeness.py` fails if
-> any vector reuses a status value as an outcome.
+**`policy_uri` appears nowhere in the merged specification.** Every outcome that
+turns on `policy_uri` semantics is therefore tier 2 or tier 0, and the two
+unresolvable vectors are tier 0: no merged sentence says what a verifier records
+when a policy bundle cannot be fetched. Those vectors assert only that the
+comparison did not happen, which is a fact about the run rather than a reading
+of any text. **The level at which that stops being tolerable is suite policy**,
+registered in `src/trace_tests/modules/unverified.py` and `docs/levels.md`, and
+is not claimed here as a specification requirement.
 
 ## The vectors
 
-Every record is identical except for `appraisal.policy_ref`, so the defect under
-test is the only thing that varies. All records are unsigned and ASCII-only.
+Every record is identical except for the `policy` block, so the defect under
+test is the only thing that varies. `appraisal.policy_ref` is fixed across the
+set and never varied: this set is about `policy.*`, and a second moving field
+would blur which one a finding is answering. All records are unsigned and
+ASCII-only.
 
-| # | Vector | Boundary | Expected |
-|---|---|---|---|
-| 01 | `no-binding-declared` | accept | `pass` |
-| 02 | `resolved-and-matches` | accept | `pass` |
-| 03 | `digest-mismatch-minimal-mutation` | contradicted | `reject` |
-| 04 | `digest-mismatch-different-object` | contradicted | `reject` |
-| 05 | `referent-unreachable` | unresolvable | `deferred` |
-| 06 | `digest-algorithm-uncomputable` | unresolvable | `deferred` |
-| 07 | `digest-bound-to-other-referent` | contradicted | `reject` |
+| # | Vector | Boundary | `TR-POL-003` | Anchor |
+|---|---|---|---|---|
+| 01 | `01-no-policy-uri.json` | accept | `skip` | tier 2 |
+| 02 | `02-resolved-and-matches.json` | accept | `pass` | tier 1 |
+| 03 | `03-digest-mismatch-minimal-mutation.json` | contradicted | `fail` | tier 1 |
+| 04 | `04-digest-mismatch-different-object.json` | contradicted | `fail` | tier 1 |
+| 05 | `05-referent-unreachable-no-route.json` | unresolvable | `unverified` | tier 0 |
+| 06 | `06-resolved-and-matches-sha384.json` | accept | `pass` | tier 1 |
+| 07 | `07-digest-bound-to-other-referent.json` | contradicted | `fail` | tier 1 |
+| 08 | `08-policy-uri-is-a-relative-reference.json` | malformed | `fail` | tier 2 |
+| 09 | `09-sha384-bound-to-other-referent.json` | contradicted | `fail` | tier 1 |
+| 10 | `10-policy-uri-carries-a-space.json` | malformed | `fail` | tier 2 |
+| 11 | `11-referent-unreachable-route-fails.json` | unresolvable | `unverified` | tier 0 |
 
-**01 and 02 are the must-accept pair, and they are why this set is not
-one-directional.** `agentrust-io/trace-spec#186` (merged 2026-08-20) states
-the criterion: a set must fail *both* unconditional implementations. A set
-written from the motivating problem alone would be all rejections and
-deferrals, and a verifier that rejects everything would pass it. 01 is the
-backward-compatibility control — every conformant record today declares no
-binding, and must keep verifying, or this set would be proposing a breaking
-change rather than describing a gap. 02 is the only vector in which a
-resolution succeeds.
+## Why the set is paired the way it is
+
+`agentrust-io/trace-spec#186` (merged 2026-08-20) states the criterion a vector
+set is claiming: *a verifier that does not implement these rules will fail this
+set*. A set must fail **both** unconditional implementations, and one vector
+cannot separate a check that reads a prefix from one that reads the whole
+object. Every rule below therefore sits on at least two vectors, and each pair
+can be told apart by a weakened variant of the rule that deviates one and leaves
+the other undisturbed.
+
+**01, 02 and 06 are the must-accept group.** A set written from the motivating
+problem alone would be all rejections, and a verifier that rejected everything
+would pass it. 01 is the backward-compatibility control: every conformant record
+today declares no `policy_uri` and must keep verifying, or this set would be
+proposing a breaking change rather than describing a gap.
 
 **03 and 04 keep the contradicted boundary off a single vector.** 03 differs
-from the appraised object in exactly one byte — the SLSA floor moves 2 → 3,
-which flips this record's verdict. 04 substitutes an unrelated document of a
-different length. A verifier comparing lengths, or sampling a prefix, passes one
-and fails the other.
+from the declared object in exactly one byte — the SLSA floor moves 2 → 3, which
+changes what the policy permits. 04 substitutes a different object of a different
+length. A verifier comparing lengths, or sampling a prefix, passes one and fails
+the other.
 
-**05 and 06 are both unresolvable, by different mechanisms.** 05 cannot reach
-the object; 06 reaches it and cannot compute over it, because the declared
-algorithm (`sha3-512`) is outside the set the schema admits
-(`^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})$`). The distinction deliberately
-rhymes with the `digest_algorithm_unsupported` classification **proposed** in
-`agentrust-io/trace-spec#184` — a non-normative draft — without adopting that
-vocabulary.
+**06 and 09 are the sha384 pair.** The schema admits `sha384:` as well as
+`sha256:`, so a verifier that hardcodes `sha256` is wrong rather than merely
+limited. Deleting sha384 support turns both to `skip`. A verifier that computes
+only `sha256` deviates 06 alone; one that accepts `sha384` without comparing —
+the fail-open shape — deviates 09 alone. 06 by itself would not catch the second.
 
-**07 is the one a well-formedness check passes.** The binding is a valid
-`sha256:` digest and is the true digest of a real object in this set — version 2
-— while `policy_ref` cites version 1. Both halves are individually valid; the
-pair is not.
+**08 and 10 are the malformed pair, and they are caught by different rules.** 08
+is a `uri-reference` where the schema asks for the absolute form: no authority,
+so nothing can dereference it. 10 is absolute and correctly schemed, with a raw
+space in the path — a transcription accident that survives a diff unnoticed.
+Removing the character rule deviates 10 alone; removing the scheme rule deviates
+08 alone.
+
+**05 and 11 are both unreachable, by different roads.** 05 cites a URI nothing
+routes. 11 cites one the manifest maps to a bundle that is not there. A resolver
+handling only a missing key would leave 11 reporting a comparison it never made,
+and one handling only a missing file would do the same to 05. The finding
+carries the resolver's exception text, so the two are distinguishable in a
+report even though they share a status.
+
+**07 is the one a well-formedness check passes.** The declared digest is a valid
+`sha256:` digest and is the true digest of a real object in this set — just not
+of the one `policy_uri` names. Both halves are individually valid; the pair is
+not.
+
+## Malformed references are found offline
+
+`08` and `10` report the same failure with or without a resolver. That is the
+check's ordering, and it is deliberate: **a reference the record got wrong is a
+defect in the record**, visible with no network at all, exactly like the digest
+shape `TR-POL-001` tests. A referent that could not be fetched is weather.
+Running without `--policy-dir` means no spurious unverified findings; it does
+not mean being blind to a defect the record carries on its face.
+
+## Resolving the bundles
+
+`resolutions.json` maps each cited URI to a path inside this directory. It is
+the single mapping: a vector cannot hold a private idea of what its URI
+resolves to. Two entries are deliberate holes — the URI cited by `05` is absent
+from the manifest, and the one cited by `11` maps to a file that is not written.
+
+```
+trace-tests verify --record tests/vectors/policy-resolution/02-resolved-and-matches.json \
+    --policy-dir tests/vectors/policy-resolution
+```
+
+The manifest is checked for *form* only when it loads: an object, string to
+string, relative paths, no parent traversal. **Whether a mapped file is there is
+not checked at load time.** Existence is a resolve-time fact, and a manifest that
+refused to load because one bundle had gone missing would be the manifest-level
+version of treating a lost referent as a wrong reference — the confusion this
+whole set exists to keep apart.
 
 ## Reproducing it
 
@@ -124,7 +147,7 @@ python tests/vectors/policy-resolution/gen_policy_resolution.py
 ```
 
 Deterministic: no keys, no clock, no randomness, no network. The digests are
-SHA-256 over the exact bytes of the sibling files under `policies/`, so anyone
+computed over the exact bytes of the sibling files under `policies/`, so anyone
 holding only this directory can recompute every number in the set.
 
 `tests/test_policy_resolution_reproduces.py` holds the generator to
@@ -143,14 +166,13 @@ policy digest stops matching, and the set fails on a clean clone.
 
 ## What this set does not establish
 
-- **No verifier was exercised.** Nothing in `trace-tests` resolves
-  `appraisal.policy_ref` today — that is the gap — so every expected outcome is
-  a claim about what a verifier should do, not a recording of what one did. The
-  tests grade the set's internal consistency: that each declared digest really
-  is, or really is not, the digest of the bytes the vector says resolution
-  returned.
-- **The unresolvable outcome is unnamed**, by choice, pending
-  `agentrust-io/trace-spec#190`.
+- **Nothing here exercises a network fetch.** The resolver in every test reads
+  bytes from disk. A redirect, a timeout, a TLS failure and a 404 all map onto
+  the same unverified status by assertion rather than by measurement.
+- **The unresolvable level is suite policy, not a specification requirement.**
+  No merged sentence governs the case; `agentrust-io/trace-spec#190` tracks the
+  open cross-surface question of what a verifier records when a citation cannot
+  be resolved.
 
 Both are recorded as exact shortfalls in
 `tests/test_policy_resolution_completeness.py::KNOWN_SHORTFALLS`, which fails
@@ -159,15 +181,12 @@ if the list changes without this file changing with it.
 ## Related
 
 - `agentrust-io/trace-tests#63` — the module proposal these cases were built for
-- `agentrust-io/trace-spec#66` — where the gap was raised and the fixtures accepted
-- `agentrust-io/trace-spec#190` — the deferred cross-surface question
-- `agentrust-io/trace-spec#173` — merged: recorded field plus a policy floor
-- `agentrust-io/trace-spec#184` — open, **draft, explicitly non-normative**:
-  *proposes* `unverifiable` on the delegation surface
+- `agentrust-io/trace-spec#66` — where the resolution gap was raised
+- `agentrust-io/trace-spec#190` — the open cross-surface question
 - `agentrust-io/trace-spec#186` — merged: the adequacy criteria this set was
   built to. It grades trace-spec's `examples/`; this repository has no adequacy
   harness, so the standard is one this set chose, not one imposed on it
 - `agentrust-io/trace-tests#66` — merged: `tr_sig` canonicalizes with RFC 8785;
   source of the self-containment principle quoted above
-- `agentrust-io/trace-tests#68` — merged: packaged schema resynced to the
-  normative v0.2 copy these records validate against
+- `agentrust-io/trace-tests#74` — merged: the published error codes and record
+  samples realigned with the modules, and the guard that keeps them that way

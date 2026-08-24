@@ -1,8 +1,8 @@
 {
-  "name": "resolved-and-matches",
-  "description": "The bundle at policy_uri hashes to exactly what bundle_hash declares. The positive control: a set that could not pass this would reject every honest record.",
-  "boundary": "accept",
-  "defect": "none - positive control, sha256",
+  "name": "sha384-bound-to-other-referent",
+  "description": "A sha384 digest of a different object. Paired with 06: deleting sha384 support turns both to skip, while a verifier that computes only sha256 fails 06 alone, and one that accepts sha384 without comparing fails 09 alone.",
+  "boundary": "contradicted",
+  "defect": "sha384 digest taken over a different object",
   "record": {
     "eat_profile": "tag:agentrust-io.com,2026:trace-v0.2",
     "iat": 1748000000,
@@ -17,7 +17,7 @@
       "nonce": "Zm9yLXRoZS1yZWNvcmQtbm9uY2U"
     },
     "policy": {
-      "bundle_hash": "sha256:d8764863e75e702ff64e53951eb3d005a84858979598f7f0bda11fc901416adc",
+      "bundle_hash": "sha384:cfe2e1e2016b98bdaf6793f311cdc30fe63c84d7a25d2fbf6827e1d800ad8ad26aed70ab364c95cf8c7618b4f9a34200",
       "enforcement_mode": "enforce",
       "policy_uri": "https://policy.example.org/bundles/policy-bundle-base.json"
     },
@@ -52,11 +52,11 @@
       "tier": 1,
       "source": "agentrust-io/trace-spec spec/trace-v0.2.md 4.3",
       "text": "the policy bundle hash is sealed to the TEE measurement, the enforcement mode is recorded, and substituting the policy invalidates the runtime claim",
-      "applies": "Read the other way: the bundle that resolves is the bundle that was sealed, so nothing was substituted and the claim stands."
+      "applies": "A resolved bundle whose digest is not the declared one is a substituted policy, so the runtime claim does not stand."
     }
   },
   "expected": {
-    "tr_pol_003": "pass",
-    "reason": "The resolved bytes hash to the declared digest."
+    "tr_pol_003": "fail",
+    "reason": "The resolved bytes contradict the declared sha384 digest. A verifier that cannot compute sha384 must not report a pass."
   }
 }

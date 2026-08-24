@@ -1,9 +1,8 @@
 {
   "name": "digest-mismatch-different-object",
-  "description": "The cited URI resolves to an unrelated policy document. Paired with 03 so the boundary is not carried by a single vector: a verifier that only samples a prefix of the document, or compares lengths, passes one of these two and fails the other.",
+  "description": "The cited bundle was replaced wholesale after the digest was taken. Paired with 03 so the check cannot be satisfied by a heuristic that only notices large differences, or only small ones.",
   "boundary": "contradicted",
-  "defect": "cited object wholly replaced after appraisal",
-  "spec": "agentrust-io/trace-spec docs/verification.md - a verifier records what it actually resolved, and evidence that resolves and contradicts fails the appraisal. Applied here to appraisal.policy_ref, which carries no digest.",
+  "defect": "cited object wholly replaced after the digest was taken",
   "record": {
     "eat_profile": "tag:agentrust-io.com,2026:trace-v0.2",
     "iat": 1748000000,
@@ -14,11 +13,13 @@
     },
     "runtime": {
       "platform": "intel-tdx",
-      "measurement": "sha256:a3f8d2b4e1c9f7a5b2d4e6f8a0b2c4d6e8f0a2b4c6d8e0f2a4b6c8d0e2f4a6b8"
+      "measurement": "sha256:a3f8d2b4e1c9f7a5b2d4e6f8a0b2c4d6e8f0a2b4c6d8e0f2a4b6c8d0e2f4a6b8",
+      "nonce": "Zm9yLXRoZS1yZWNvcmQtbm9uY2U"
     },
     "policy": {
-      "bundle_hash": "sha256:b4e1c9f7a5b2d4e6f8a0b2c4d6e8f0a2b4c6d8e0f2a4b6c8d0e2f4a6b8c0d2e4",
-      "enforcement_mode": "enforce"
+      "bundle_hash": "sha256:d8764863e75e702ff64e53951eb3d005a84858979598f7f0bda11fc901416adc",
+      "enforcement_mode": "enforce",
+      "policy_uri": "https://policy.example.org/bundles/policy-bundle-other.json"
     },
     "data_class": "confidential",
     "build_provenance": {
@@ -28,7 +29,7 @@
     "appraisal": {
       "status": "affirming",
       "verifier": "https://verifier.example.org",
-      "policy_ref": "https://policy.example.org/bundles/policy-bundle-base.json",
+      "policy_ref": "https://verifier.example.org/appraisal-policy/v1",
       "timestamp": 1748000042
     },
     "transparency": "https://scitt.example.org/receipts/abc123def456",
@@ -43,19 +44,19 @@
     }
   },
   "context": {
-    "cited_uri": "https://policy.example.org/bundles/policy-bundle-base.json",
+    "cited_uri": "https://policy.example.org/bundles/policy-bundle-other.json",
     "resolution": {
-      "outcome": "resolved",
-      "file": "policies/policy-bundle-unrelated.json",
-      "actual_sha256": "sha256:23905737177574be26e1212264b88ffe81e06e99aab1fe6115ebbb2e9205109c"
+      "outcome": "resolved"
     },
-    "candidate_binding": {
-      "field": "CANDIDATE:appraisal.policy_digest",
-      "value": "sha256:d8764863e75e702ff64e53951eb3d005a84858979598f7f0bda11fc901416adc"
+    "anchor": {
+      "tier": 1,
+      "source": "agentrust-io/trace-spec spec/trace-v0.2.md 4.3",
+      "text": "the policy bundle hash is sealed to the TEE measurement, the enforcement mode is recorded, and substituting the policy invalidates the runtime claim",
+      "applies": "A resolved bundle whose digest is not the declared one is a substituted policy, so the runtime claim does not stand."
     }
   },
   "expected": {
-    "outcome": "reject",
-    "reason": "Resolved bytes contradict the declared binding."
+    "tr_pol_003": "fail",
+    "reason": "The resolved bytes contradict the declared digest."
   }
 }
