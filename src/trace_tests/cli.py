@@ -6,7 +6,9 @@ import datetime as _dt
 import json
 import importlib.metadata
 import pathlib
+import re
 import sys
+from collections.abc import Callable
 from typing import Any
 
 import click
@@ -110,6 +112,71 @@ def _load_receipt(path: str | None) -> dict | None:
         sys.exit(2)
     return data
 
+
+def _load_policy_resolver(policy_dir: str | None) -> Callable[[str], bytes] | None:
+    """Build a policy-bundle resolver from DIR/resolutions.json, or None when not supplied.
+
+    The manifest is checked for *form* only: an object, string to string,
+    relative paths, no parent traversal. Whether a mapped file is actually
+    there is deliberately not checked here. Existence is a resolve-time fact,
+    and a manifest that refused to load because one bundle had gone missing
+    would be the manifest-level version of treating a lost referent as a wrong
+    reference, which is the confusion TR-POL-003 exists to keep apart. A
+    missing file surfaces as an unverified finding for the record that cites
+    it, and leaves every other record in the run readable.
+    """
+    if policy_dir is None:
+        return None
+    root = pathlib.Path(policy_dir)
+    manifest_path = root / "resolutions.json"
+    try:
+        with open(manifest_path, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except OSError as exc:
+        click.echo(f"Error: cannot read policy manifest {manifest_path}: {exc}", err=True)
+        sys.exit(2)
+    except json.JSONDecodeError as exc:
+        click.echo(f"Error: policy manifest {manifest_path} is not valid JSON: {exc}", err=True)
+        sys.exit(2)
+    if not isinstance(data, dict):
+        click.echo(
+            f"Error: policy manifest {manifest_path} must be a JSON object, "
+            f"got {type(data).__name__}",
+            err=True,
+        )
+        sys.exit(2)
+    for uri, rel in data.items():
+        if not isinstance(rel, str):
+            click.echo(
+                f"Error: policy manifest {manifest_path} maps {uri!r} to "
+                f"{type(rel).__name__}, expected a relative path string",
+                err=True,
+            )
+            sys.exit(2)
+        if _is_unsafe_relative(rel):
+            click.echo(
+                f"Error: policy manifest {manifest_path} maps {uri!r} to {rel!r}; "
+                "entries must be relative paths inside the directory, with no "
+                "parent traversal",
+                err=True,
+            )
+            sys.exit(2)
+
+    def _resolve(uri: str) -> bytes:
+        # A URI the manifest does not hold raises, exactly as a fetch would;
+        # so does a mapped file that is not there. Both reach TR-POL-003 as
+        # unverified, and the message carries which happened.
+        return (root / data[uri]).read_bytes()
+
+    return _resolve
+
+
+def _is_unsafe_relative(rel: str) -> bool:
+    """True when *rel* escapes the manifest's own directory, or tries to."""
+    if not rel or rel.startswith(("/", "\\")) or re.match(r"^[A-Za-z]:", rel):
+        return True
+    return ".." in pathlib.PurePosixPath(rel.replace("\\", "/")).parts
+
 @click.group()
 @click.version_option(__version__)
 def main() -> None:
@@ -148,7 +215,25 @@ def main() -> None:
         "says where the anchor lives, the receipt is what proves the record is in it."
     ),
 )
-def verify(record: str, level: int, max_age: int, expected_nonce: str | None, receipt: str | None) -> None:
+@click.option(
+    "--policy-dir",
+    "policy_dir",
+    default=None,
+    type=click.Path(),
+    help=(
+        "Directory holding resolutions.json, a map from policy_uri to a relative "
+        "path inside it. Supplying it lets TR-POL-003 resolve policy.policy_uri and "
+        "compare the bundle against policy.bundle_hash; without it that check skips."
+    ),
+)
+def verify(
+    record: str,
+    level: int,
+    max_age: int,
+    expected_nonce: str | None,
+    receipt: str | None,
+    policy_dir: str | None,
+) -> None:
     """Verify a TRACE trust record against the conformance suite."""
     try:
         data, fmt = load_record(record)
@@ -157,6 +242,7 @@ def verify(record: str, level: int, max_age: int, expected_nonce: str | None, re
         sys.exit(2)
 
     receipt_data = _load_receipt(receipt)
+    policy_resolver = _load_policy_resolver(policy_dir)
 
     results = run(
         data,
@@ -165,6 +251,7 @@ def verify(record: str, level: int, max_age: int, expected_nonce: str | None, re
         max_age_seconds=max_age,
         expected_nonce=expected_nonce,
         receipt=receipt_data,
+        policy_resolver=policy_resolver,
     )
     exit_code = _print_report(record, fmt, level, results)
     sys.exit(exit_code)
@@ -210,6 +297,15 @@ def verify(record: str, level: int, max_age: int, expected_nonce: str | None, re
     type=click.Path(),
     help="Path to the anchor receipt (JSON). Required for TR-ANC-002 at Level 2.",
 )
+@click.option(
+    "--policy-dir",
+    "policy_dir",
+    default=None,
+    type=click.Path(),
+    help="Directory holding resolutions.json, a map from policy_uri to a relative "
+    "path inside it. Required for TR-POL-003 to resolve the bundle; without it "
+    "that check skips.",
+)
 def report(
     record: str,
     max_level: int,
@@ -220,6 +316,7 @@ def report(
     fail_under: int | None,
     expected_nonce: str | None,
     receipt: str | None,
+    policy_dir: str | None,
 ) -> None:
     """Produce a conformance report you can hand to someone else.
 
@@ -234,6 +331,7 @@ def report(
         sys.exit(2)
 
     receipt_data = _load_receipt(receipt)
+    policy_resolver = _load_policy_resolver(policy_dir)
 
     results_by_level = {
         level: run(
@@ -243,6 +341,7 @@ def report(
             max_age_seconds=max_age,
             expected_nonce=expected_nonce,
             receipt=receipt_data,
+            policy_resolver=policy_resolver,
         )
         for level in range(max_level + 1)
     }
