@@ -19,15 +19,20 @@ from typing import Any
 
 import jsonschema
 
+from trace_tests.modules.unverified import UNVERIFIED_FAILS_FROM_LEVEL
+
 REPO = pathlib.Path(__file__).resolve().parents[1]
 MODULES = REPO / "src" / "trace_tests" / "modules"
 ERROR_CODES = REPO / "docs" / "error-codes.md"
+LEVELS = REPO / "docs" / "levels.md"
 SCHEMA = REPO / "schemas" / "trace-claim.json"
 DOCS = REPO / "docs"
 
 _CODE = re.compile(r"TR-[A-Z]{3}-\d{3}")
 _DOCUMENTED_ROW = re.compile(r"^\| (TR-[A-Z]{3}-\d{3}) ", re.M)
 _JSON_BLOCK = re.compile(r"```json\n(.*?)```", re.S)
+#: A row of the unverified-level table in docs/levels.md: code, then a level.
+_UNVERIFIED_ROW = re.compile(r"^\| (TR-[A-Z]{3}-\d{3}) \| (\d+) \|", re.M)
 
 
 def _codes(text: str) -> set[str]:
@@ -185,4 +190,91 @@ def test_every_json_sample_in_the_docs_agrees_with_the_packaged_schema() -> None
         f"no JSON object sample under {DOCS.relative_to(REPO)} was validated "
         f"({unparsed} block(s) did not parse). Either the samples are gone or the fence "
         "this reads has changed; a check over nothing must not report a pass."
+    )
+
+
+def _unverified_emitters(source: str) -> set[str]:
+    """Codes this module constructs a ``Finding`` for with ``Status.UNVERIFIED``.
+
+    Matched on the construction rather than on the string, because a code named
+    in a message, a comment or a table is not the module *emitting* it. The
+    registration table names every code it governs; without this the two sets
+    could agree while nothing actually produced one of them.
+    """
+    found: set[str] = set()
+    for node in ast.walk(ast.parse(source)):
+        if not isinstance(node, ast.Call):
+            continue
+        func = node.func
+        name = func.id if isinstance(func, ast.Name) else getattr(func, "attr", "")
+        if name != "Finding":
+            continue
+        args = list(node.args)
+        by_kw = {k.arg: k.value for k in node.keywords}
+        code_node = args[0] if args else by_kw.get("code")
+        status_node = args[1] if len(args) > 1 else by_kw.get("status")
+        if not isinstance(code_node, ast.Constant) or not isinstance(code_node.value, str):
+            continue
+        if not (isinstance(status_node, ast.Attribute) and status_node.attr == "UNVERIFIED"):
+            continue
+        found |= _codes(code_node.value)
+    return found
+
+
+def _emitted_unverified_codes() -> set[str]:
+    emitted: set[str] = set()
+    for path in sorted(MODULES.glob("*.py")):
+        emitted |= _unverified_emitters(path.read_text(encoding="utf-8"))
+    return emitted
+
+
+def test_every_code_that_can_be_unverified_is_registered() -> None:
+    """A module emitting UNVERIFIED under an unregistered code fails from level 1.
+
+    That default is fail-closed and therefore safe, but it is also silent: the
+    code would be governed by a rule nobody chose. Registering it is a
+    decision, so it has to be made rather than defaulted into.
+    """
+    emitted = _emitted_unverified_codes()
+    registered = set(UNVERIFIED_FAILS_FROM_LEVEL)
+    assert emitted <= registered, (
+        f"emitted as UNVERIFIED and not registered: {sorted(emitted - registered)}\n"
+        "Add the code to UNVERIFIED_FAILS_FROM_LEVEL with the level it fails from, "
+        "or stop emitting UNVERIFIED under it. Falling through to the default means "
+        "a level nobody picked."
+    )
+
+
+def test_every_registered_code_is_actually_emitted() -> None:
+    """The other direction: a row for a code nothing produces documents a fiction.
+
+    This is the half that catches a table outliving its module. A registered
+    code with no emitter reads as a check the suite performs, and it does not.
+    """
+    emitted = _emitted_unverified_codes()
+    registered = set(UNVERIFIED_FAILS_FROM_LEVEL)
+    assert registered <= emitted, (
+        f"registered and emitted by no module: {sorted(registered - emitted)}\n"
+        "Delete the row, or emit the finding. A level for a status nothing "
+        "produces is a claim nobody checked."
+    )
+
+
+def test_the_registration_table_and_the_published_table_agree() -> None:
+    """``docs/levels.md`` publishes the levels; the module decides them.
+
+    Two copies of one fact, which is the shape everything else in this file
+    exists to catch. Compared by row rather than by prose, because a reader
+    acting on the published table needs the number to be the one the code uses.
+    """
+    published = {code: int(level) for code, level in _UNVERIFIED_ROW.findall(
+        LEVELS.read_text(encoding="utf-8"))}
+    assert published == UNVERIFIED_FAILS_FROM_LEVEL, (
+        f"published in {LEVELS.relative_to(REPO)}: {published}\n"
+        f"registered in the module:      {UNVERIFIED_FAILS_FROM_LEVEL}\n"
+        "A reader following the page must get the level the code applies."
+    )
+    assert published, (
+        "no unverified-level row was parsed, so this check would pass over no "
+        "work; the table in docs/levels.md is gone or its shape changed"
     )

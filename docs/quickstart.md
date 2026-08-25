@@ -87,6 +87,28 @@ trace-tests verify --record sample-record.json --level 2 --expected-nonce "$VERI
 
 The sample fixture passes Level 0. Levels 1 and 2 will fail on runtime attestation and transparency fields — that is expected. See [Trust Levels](levels.md) for what each level requires.
 
+## Resolving the policy bundle
+
+If your record carries `policy.policy_uri`, TR-POL-003 can fetch the bundle and
+check that it has the digest `policy.bundle_hash` declares. Point `--policy-dir`
+at a directory holding a `resolutions.json` that maps each URI to a relative
+path inside it:
+
+```bash
+trace-tests verify --record sample-record.json --level 0 --policy-dir ./bundles
+```
+
+```text
+{
+  "https://policy.example.org/bundles/agent-v1.json": "agent-v1.json"
+}
+```
+
+Without `--policy-dir` the resolution part of the check skips, so verifying
+offline costs you nothing. A `policy_uri` that is malformed rather than
+unreachable is still reported either way: that is a defect in the record, not a
+fetch that failed.
+
 ## Exit codes
 
 | Code | Meaning |

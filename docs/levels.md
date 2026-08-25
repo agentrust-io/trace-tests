@@ -62,6 +62,7 @@ Level 0 records are signed with a software key. The `runtime.platform` must be `
 - `policy.enforcement_mode` is `"strict"` or `"monitor"` — TR-POL-002
 - `cnf.jwk` missing, of an unsupported key type, or carrying private key material (`d`) — TR-SIG-004
 - Signature does not verify against `cnf.jwk` — TR-SIG-005
+- `policy.policy_uri` is not an absolute URI, or the bundle it resolves to does not have the digest `policy.bundle_hash` declares — TR-POL-003. The malformed case is reported with or without a resolver: a reference the record got wrong needs no network to detect
 
 ---
 
@@ -145,6 +146,30 @@ Level 2 adds tool transcript and transparency anchor requirements. The `transpar
 - `tool_transcript.call_count` negative or not an integer — TR-TXN-002
 - `transparency` is absent or empty, is not a string, or is not an `https://` URI with a host — TR-ANC-001
 - no anchor receipt was supplied, the receipt is malformed, or its inclusion proof does not reproduce the committed `merkle_root` — TR-ANC-002. A record cannot reach Level 2 on a URI alone: pass the receipt with `--receipt`
+- `policy.policy_uri` is present, a resolver was supplied with `--policy-dir`, and the bundle could not be read — TR-POL-003. Unverified rather than failed, and unverified fails the run from Level 2
+
+---
+
+## Unverified findings
+
+An unverified finding means **the check could not be executed against the
+evidence the record cites**. It is held apart from a skip so that a consumer can
+never read it as a benign omission, and it is not a pass.
+
+Whether it fails the run is per code rather than one rule over all of them.
+Different checks lose their evidence for different reasons, and the level at
+which that stops being tolerable is a property of the check.
+
+| Code | UNVERIFIED fails the run from level |
+|------|-------------------------------------|
+| TR-SIG-005 | 1 |
+| TR-POL-003 | 2 |
+
+A code absent from this table fails from Level 1. That default is deliberate: a
+new code nobody registered still fails closed, and the registration guard turns
+red rather than the run turning quietly permissive. The table is
+`UNVERIFIED_FAILS_FROM_LEVEL` in `src/trace_tests/modules/unverified.py`, and
+`tests/test_docs_match_the_modules.py` fails if the two disagree.
 
 ---
 
