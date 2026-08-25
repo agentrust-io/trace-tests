@@ -170,6 +170,22 @@ trace-tests verify --record sample-record.json --level 2 --expected-nonce "$VERI
 
 The sample fixture passes Level 0. Levels 1 and 2 will fail on runtime attestation and transparency fields — that is expected. See [Trust Levels](https://tests.agentrust-io.com/docs/levels/index.md) for what each level requires.
 
+## Resolving the policy bundle
+
+If your record carries `policy.policy_uri`, TR-POL-003 can fetch the bundle and check that it has the digest `policy.bundle_hash` declares. Point `--policy-dir` at a directory holding a `resolutions.json` that maps each URI to a relative path inside it:
+
+```
+trace-tests verify --record sample-record.json --level 0 --policy-dir ./bundles
+```
+
+```
+{
+  "https://policy.example.org/bundles/agent-v1.json": "agent-v1.json"
+}
+```
+
+Without `--policy-dir` the resolution part of the check skips, so verifying offline costs you nothing. A `policy_uri` that is malformed rather than unreachable is still reported either way: that is a defect in the record, not a fetch that failed.
+
 ## Exit codes
 
 | Code | Meaning                    |
@@ -265,6 +281,7 @@ Level 0 records are signed with a software key. The `runtime.platform` must be `
 - `policy.enforcement_mode` is `"strict"` or `"monitor"` — TR-POL-002
 - `cnf.jwk` missing, of an unsupported key type, or carrying private key material (`d`) — TR-SIG-004
 - Signature does not verify against `cnf.jwk` — TR-SIG-005
+- `policy.policy_uri` is not an absolute URI, or the bundle it resolves to does not have the digest `policy.bundle_hash` declares — TR-POL-003. The malformed case is reported with or without a resolver: a reference the record got wrong needs no network to detect
 
 ______________________________________________________________________
 
@@ -348,6 +365,22 @@ Level 2 adds tool transcript and transparency anchor requirements. The `transpar
 - `tool_transcript.call_count` negative or not an integer — TR-TXN-002
 - `transparency` is absent or empty, is not a string, or is not an `https://` URI with a host — TR-ANC-001
 - no anchor receipt was supplied, the receipt is malformed, or its inclusion proof does not reproduce the committed `merkle_root` — TR-ANC-002. A record cannot reach Level 2 on a URI alone: pass the receipt with `--receipt`
+- `policy.policy_uri` is present, a resolver was supplied with `--policy-dir`, and the bundle could not be read — TR-POL-003. Unverified rather than failed, and unverified fails the run from Level 2
+
+______________________________________________________________________
+
+## Unverified findings
+
+An unverified finding means **the check could not be executed against the evidence the record cites**. It is held apart from a skip so that a consumer can never read it as a benign omission, and it is not a pass.
+
+Whether it fails the run is per code rather than one rule over all of them. Different checks lose their evidence for different reasons, and the level at which that stops being tolerable is a property of the check.
+
+| Code       | UNVERIFIED fails the run from level |
+| ---------- | ----------------------------------- |
+| TR-SIG-005 | 1                                   |
+| TR-POL-003 | 2                                   |
+
+A code absent from this table fails from Level 1. That default is deliberate: a new code nobody registered still fails closed, and the registration guard turns red rather than the run turning quietly permissive. The table is `UNVERIFIED_FAILS_FROM_LEVEL` in `src/trace_tests/modules/unverified.py`, and `tests/test_docs_match_the_modules.py` fails if the two disagree.
 
 ______________________________________________________________________
 
@@ -375,7 +408,7 @@ The TRACE conformance suite is divided into seven modules. Each module maps to a
 | [Envelope](https://tests.agentrust-io.com/docs/modules/tr-env/index.md)     | TR-ENV    | §3.2         | `eat_profile` URI, `iat` validity, `subject` form, presence of `cnf.jwk.kty`                                                                                                               |
 | [Signature](https://tests.agentrust-io.com/docs/modules/tr-sig/index.md)    | TR-SIG    | §3.2.1       | Private key leak detection, key type support, and the Ed25519 signature verification outcome                                                                                               |
 | [Runtime](https://tests.agentrust-io.com/docs/modules/tr-rte/index.md)      | TR-RTE    | §3.1         | TEE platform enum, measurement format, RIM URI scheme                                                                                                                                      |
-| [Policy](https://tests.agentrust-io.com/docs/modules/tr-pol/index.md)       | TR-POL    | §3.1         | Policy bundle hash format, enforcement mode values                                                                                                                                         |
+| [Policy](https://tests.agentrust-io.com/docs/modules/tr-pol/index.md)       | TR-POL    | §3.1         | Policy bundle hash format, enforcement mode values, and whether the bundle at `policy_uri` has the declared digest                                                                         |
 | [Transcript](https://tests.agentrust-io.com/docs/modules/tr-txn/index.md)   | TR-TXN    | §3.1         | Tool-call transcript hash binding                                                                                                                                                          |
 | [Transparency](https://tests.agentrust-io.com/docs/modules/tr-anc/index.md) | TR-ANC    | §3.2         | SCITT receipt URI form (TR-ANC-001), and offline replay of the inclusion proof against the committed Merkle root when a receipt is supplied (TR-ANC-002). The URI itself is never resolved |
 | [Provenance](https://tests.agentrust-io.com/docs/modules/tr-sca/index.md)   | TR-SCA    | §3.1         | SLSA provenance level and digest format                                                                                                                                                    |
@@ -424,10 +457,23 @@ Tests Cedar policy bundle binding.
 
 ## Required at Level 0+
 
-| Test ID    | Description                                                                 | Positive Case                      | Negative Case                       |
-| ---------- | --------------------------------------------------------------------------- | ---------------------------------- | ----------------------------------- |
-| TR-POL-001 | `policy.bundle_hash` is a valid `sha256:` digest                            | `sha256:` followed by 64 hex chars | missing, wrong prefix, wrong length |
-| TR-POL-002 | `policy.enforcement_mode` is `enforce`, `advisory`, `silent`, or `declared` | `enforce`                          | `strict`, `monitor`, absent         |
+| Test ID    | Description                                                                                                        | Positive Case                                                  | Negative Case                                                                      |
+| ---------- | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| TR-POL-001 | `policy.bundle_hash` is a valid `sha256:` or `sha384:` digest                                                      | `sha256:` + 64 hex chars, `sha384:` + 96 hex chars             | missing, wrong prefix, wrong length                                                |
+| TR-POL-002 | `policy.enforcement_mode` is `enforce`, `advisory`, `silent`, or `declared`                                        | `enforce`                                                      | `strict`, `monitor`, absent                                                        |
+| TR-POL-003 | `policy.policy_uri` is an absolute URI, and the bundle it resolves to has the digest `policy.bundle_hash` declares | absent `policy_uri`; or a resolved bundle whose digest matches | relative reference, whitespace in the URI, resolved bundle with a different digest |
+
+## Resolving the bundle
+
+TR-POL-003 needs somewhere to fetch the bundle from. The resolver is supplied by the caller and never derived from the record — a record that named its own resolver could name one that agrees with it. From the CLI that is `--policy-dir DIR`, where `DIR/resolutions.json` maps each `policy_uri` to a relative path inside `DIR`:
+
+```
+trace-tests verify --record record.json --policy-dir ./bundles
+```
+
+Without it the resolution part of the check skips, so offline verification stays a first-class use rather than a degraded one.
+
+**A malformed `policy_uri` is reported with or without a resolver.** A reference the record got wrong is a defect in the record, visible with no network at all, exactly like the digest shape TR-POL-001 tests. A referent that could not be fetched is not: that is reported as unverified, and only when a resolver was supplied and failed.
 
 # TR-TXN — Transcript
 
@@ -496,10 +542,11 @@ All TRACE test failures emit a structured error code of the form `TR-<MODULE>-<N
 
 ## TR-POL — Policy
 
-| Code       | Description                                                                     | How to fix                                                                                                                                                        |
-| ---------- | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| TR-POL-001 | `policy.bundle_hash` is not a valid `sha256:` digest                            | Compute `sha256:` + hex digest of your Cedar policy bundle bytes                                                                                                  |
-| TR-POL-002 | `policy.enforcement_mode` is not `enforce`, `advisory`, `silent`, or `declared` | Replace `"strict"` or `"monitor"` with one of the four accepted values; `"declared"` is the honest value for a producer that binds a policy without evaluating it |
+| Code       | Description                                                                                                                                                                                                                                                                    | How to fix                                                                                                                                                                 |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TR-POL-001 | `policy.bundle_hash` is not a valid `sha256:` or `sha384:` digest                                                                                                                                                                                                              | Compute `sha256:` + 64 hex chars, or `sha384:` + 96 hex chars, over your policy bundle bytes. Both are accepted by the schema and by the module                            |
+| TR-POL-002 | `policy.enforcement_mode` is not `enforce`, `advisory`, `silent`, or `declared`                                                                                                                                                                                                | Replace `"strict"` or `"monitor"` with one of the four accepted values; `"declared"` is the honest value for a producer that binds a policy without evaluating it          |
+| TR-POL-003 | `policy.policy_uri` is not an absolute URI, or the bundle it resolves to does not have the digest `policy.bundle_hash` declares. Unverified when a resolver was supplied and the bundle could not be read; skipped when no `policy_uri` is present or no resolver was supplied | Point `policy_uri` at the bundle whose bytes hash to `bundle_hash`. A record that cites a bundle it cannot be checked against is reported as unverified rather than passed |
 
 ## TR-TXN — Transcript
 
