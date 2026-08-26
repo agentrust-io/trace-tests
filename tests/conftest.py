@@ -61,6 +61,7 @@ def _build_signed_cmcp_record(
         },
         "data_class": "internal",
         "cnf": {"jwk": {"kty": "OKP", "crv": "Ed25519", "x": x, "kid": kid}},
+        "appraisal": {"status": "affirming", "verifier": "https://verifier.example.org"},
     }
 
     if nonce is not None:
@@ -169,6 +170,7 @@ def _build_software_only_record() -> dict:
             },
             "data_class": "internal",
             "cnf": {"jwk": {"kty": "OKP", "crv": "Ed25519", "x": x, "kid": kid}},
+            "appraisal": {"status": "affirming", "verifier": "https://verifier.example.org"},
         },
         "gateway": {"session_id": "level2-test"},
         "signature": "",

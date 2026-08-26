@@ -16,6 +16,7 @@ from __future__ import annotations
 import pytest
 
 from tests.test_level0 import VALID_APPRAISAL, VALID_ENFORCEMENT, VALID_PLATFORMS
+from trace_tests.modules.tr_apr import _VALID_STATUS
 from trace_tests.modules.tr_pol import _VALID_ENFORCEMENT
 from trace_tests.modules.tr_rte import _VALID_PLATFORMS
 
@@ -31,6 +32,7 @@ def _schema_enum(schema: dict, *path: str) -> set[str]:
 COPIES = [
     ("tr_rte._VALID_PLATFORMS", lambda: _VALID_PLATFORMS, ("runtime", "platform")),
     ("tr_pol._VALID_ENFORCEMENT", lambda: _VALID_ENFORCEMENT, ("policy", "enforcement_mode")),
+    ("tr_apr._VALID_STATUS", lambda: _VALID_STATUS, ("appraisal", "status")),
     ("test_level0.VALID_PLATFORMS", lambda: VALID_PLATFORMS, ("runtime", "platform")),
     ("test_level0.VALID_ENFORCEMENT", lambda: VALID_ENFORCEMENT, ("policy", "enforcement_mode")),
     ("test_level0.VALID_APPRAISAL", lambda: VALID_APPRAISAL, ("appraisal", "status")),
@@ -54,9 +56,9 @@ def test_a_hand_written_enum_matches_the_schema(label, get_copy, path, schema) -
 
 
 def test_every_known_copy_is_listed() -> None:
-    """A guard on the guard: five copies exist, and all five are asserted above.
+    """A guard on the guard: six copies exist, and all six are asserted above.
 
-    Adding a sixth without adding it here would leave it unguarded, which is the
+    Adding a seventh without adding it here would leave it unguarded, which is the
     state this file exists to end. `enum_drift.py` is what finds a new one.
     """
-    assert len(COPIES) == 5
+    assert len(COPIES) == 6
