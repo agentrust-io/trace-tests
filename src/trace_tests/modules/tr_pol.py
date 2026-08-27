@@ -155,7 +155,7 @@ def check(
         ))
 
     enforcement = policy.get("enforcement_mode")
-    if enforcement in _VALID_ENFORCEMENT:
+    if isinstance(enforcement, str) and enforcement in _VALID_ENFORCEMENT:
         findings.append(Finding("TR-POL-002", Status.PASS, f"policy.enforcement_mode is valid ({enforcement!r})"))
     else:
         findings.append(Finding(

@@ -23,7 +23,14 @@ def check(trace: dict[str, Any]) -> list[Finding]:
         return [Finding("TR-SCA-001", Status.FAIL, "TR-SCA-001: build_provenance must be an object")]
 
     slsa_level = prov.get("slsa_level")
-    if slsa_level in _SLSA_LEVELS:
+    # JSON booleans are not integers, although Python makes bool an int subclass.
+    # JSON Schema does admit 1.0 as an integer, so numeric membership remains valid
+    # after booleans are excluded explicitly.
+    if (
+        isinstance(slsa_level, (int, float))
+        and not isinstance(slsa_level, bool)
+        and slsa_level in _SLSA_LEVELS
+    ):
         findings.append(Finding("TR-SCA-001", Status.PASS, f"build_provenance.slsa_level is valid ({slsa_level})"))
     else:
         findings.append(Finding(

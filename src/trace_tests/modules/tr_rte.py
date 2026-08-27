@@ -48,7 +48,7 @@ def check(
         ]
 
     platform = runtime.get("platform")
-    if platform in _DEV_PLATFORMS:
+    if isinstance(platform, str) and platform in _DEV_PLATFORMS:
         if level == 0:
             findings.append(
                 Finding("TR-RTE-001", Status.PASS, f"runtime.platform is registered ({platform!r})")
@@ -63,7 +63,7 @@ def check(
                     f"hardware-attested levels (Level {level} requires a hardware TEE platform)",
                 )
             )
-    elif platform in _VALID_PLATFORMS:
+    elif isinstance(platform, str) and platform in _VALID_PLATFORMS:
         findings.append(
             Finding("TR-RTE-001", Status.PASS, f"runtime.platform is registered ({platform!r})")
         )

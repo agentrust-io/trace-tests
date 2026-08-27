@@ -4,12 +4,11 @@
 a record it does not understand ends the whole run: the caller gets a traceback where
 a verdict belongs, and the record is neither passed nor failed.
 
-``tr_sig`` did exactly that in five ways. ``Finding(rule=...)`` raised ``TypeError`` on
-the one check meant to catch a record that embeds its own private key, and reading
-``cnf`` or ``cnf.jwk`` raised ``AttributeError`` whenever either was not an object. The
-packaged schema does not forbid a ``d`` member in ``cnf.jwk``, so nothing rejected such
-a record before the module saw it. The other six modules already guarded their inputs
-with ``isinstance``; this pins that for all seven.
+The original regression covered malformed top-level fields but not nested discriminator
+fields. Four modules then performed set membership directly on values from the record:
+an array or object at ``policy.enforcement_mode``, ``runtime.platform``,
+``build_provenance.slsa_level`` or ``cnf.jwk.kty`` raised ``TypeError`` instead of
+returning a finding. This matrix pins both levels of the record shape.
 
 Scope: the record is a dict throughout and its *fields* are malformed. The cmcp case
 below hands ``check`` an envelope whose ``trace`` is junk, but it does so directly.
@@ -51,10 +50,25 @@ TOP_LEVEL = (
     "transparency", "appraisal", "signature", "model", "subject", "iat",
 )
 
+NESTED_DISCRIMINANTS = (
+    (("policy", "enforcement_mode"), "TR-POL-002"),
+    (("runtime", "platform"), "TR-RTE-001"),
+    (("build_provenance", "slsa_level"), "TR-SCA-001"),
+    (("cnf", "jwk", "kty"), "TR-SIG-004"),
+)
+
 
 def _record() -> dict[str, Any]:
     raw = json.loads((VECTORS / "signed_root.json").read_text(encoding="utf-8"))
     return dict(raw.get("record", raw))
+
+
+def _replace(record: dict[str, Any], path: tuple[str, ...], value: Any) -> None:
+    """Replace the value at *path* in a copied fixture."""
+    node = record
+    for key in path[:-1]:
+        node = node[key]
+    node[path[-1]] = value
 
 
 def _call(module: Any, record: dict[str, Any]) -> list[Finding]:
@@ -83,6 +97,11 @@ def _mutations() -> list[tuple[str, dict[str, Any]]]:
         if isinstance(record.get("cnf"), dict):
             record["cnf"]["jwk"] = junk
             cases.append((f"cnf.jwk={junk!r}", record))
+    for path, _ in NESTED_DISCRIMINANTS:
+        for junk in JUNK:
+            record = _record()
+            _replace(record, path, junk)
+            cases.append((f"{'.'.join(path)}={junk!r}", record))
     record = _record()
     record["cnf"]["jwk"]["d"] = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
     cases.append(("cnf.jwk carries d", record))
@@ -117,6 +136,40 @@ def test_no_module_raises_on_a_record_whose_fields_are_malformed(name: str) -> N
         f"runner.run has no try, so each of these ends the run instead of failing the "
         f"record:\n  " + "\n  ".join(raised)
     )
+
+
+@pytest.mark.parametrize(
+    ("path", "expected_code"),
+    NESTED_DISCRIMINANTS,
+    ids=["policy", "runtime", "provenance", "signing-key"],
+)
+@pytest.mark.parametrize("junk", (["unexpected"], {"unexpected": True}), ids=("array", "object"))
+def test_runner_fails_nested_discriminators_instead_of_raising(
+    path: tuple[str, ...], expected_code: str, junk: Any
+) -> None:
+    record = _record()
+    _replace(record, path, junk)
+
+    results = run(record, "trace", level=2)
+
+    findings = [finding for module in results.values() for finding in module]
+    assert any(finding.code == expected_code and finding.failed() for finding in findings), (
+        f"{'.'.join(path)}={junk!r} produced no {expected_code} failure: {findings}"
+    )
+
+
+@pytest.mark.parametrize("slsa_level", [True, False])
+def test_runner_rejects_boolean_slsa_levels(slsa_level: bool) -> None:
+    """JSON booleans must not inherit Python's integer membership semantics."""
+    record = _record()
+    record["build_provenance"]["slsa_level"] = slsa_level
+
+    results = run(record, "trace", level=1)
+
+    assert any(
+        finding.code == "TR-SCA-001" and finding.failed()
+        for finding in results["TR-SCA"]
+    ), results["TR-SCA"]
 
 
 def test_a_record_embedding_its_own_private_key_fails_rather_than_raising() -> None:
@@ -243,4 +296,3 @@ def test_the_cmcp_path_does_not_raise_on_a_malformed_envelope() -> None:
     assert not raised, (
         "tr_sig.check on a cmcp envelope raised or returned nothing:\n  " + "\n  ".join(raised)
     )
-
