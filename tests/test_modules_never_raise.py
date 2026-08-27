@@ -44,7 +44,17 @@ MODULES = {
 #: Values a record can carry where an object or a string is expected. `True` is here
 #: because `isinstance(True, int)`; `False` and `0` because a bare truthiness test
 #: reads them as absent, which is a different branch from a wrong type.
-JUNK: tuple[Any, ...] = ("a-string", 123, None, [1, 2], True, False, 0, {}, "")
+#:
+#: The last three are a different axis and were added after the first nine reported this
+#: file clean over a class they cannot represent. Every one of the nine serializes through
+#: ``rfc8785`` without complaint, so no number of runs could reach a module that raises
+#: while canonicalizing. These three are the ones JCS has no form for: an integer outside
+#: the safe range, a non-finite float, and a lone surrogate. All three are ordinary JSON
+#: that ``json.loads`` accepts and ``load_record`` has no reason to refuse.
+JUNK: tuple[Any, ...] = (
+    "a-string", 123, None, [1, 2], True, False, 0, {}, "",
+    10**20, float("inf"), "\ud800",
+)
 
 TOP_LEVEL = (
     "cnf", "runtime", "policy", "tool_transcript", "build_provenance",
