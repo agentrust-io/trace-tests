@@ -6,14 +6,14 @@ from collections.abc import Callable
 from typing import Any
 
 from trace_tests.loader import extract_trace
-from trace_tests.modules import tr_anc, tr_env, tr_pol, tr_rte, tr_sca, tr_sig, tr_txn
+from trace_tests.modules import tr_anc, tr_apr, tr_env, tr_pol, tr_rte, tr_sca, tr_sig, tr_txn
 from trace_tests.result import Finding
 
 # Modules that run at each level (cumulative).
 _LEVEL_MODULES: dict[int, list[str]] = {
-    0: ["TR-ENV", "TR-SIG", "TR-POL"],
-    1: ["TR-ENV", "TR-SIG", "TR-POL", "TR-RTE", "TR-SCA"],
-    2: ["TR-ENV", "TR-SIG", "TR-POL", "TR-RTE", "TR-SCA", "TR-TXN", "TR-ANC"],
+    0: ["TR-ENV", "TR-SIG", "TR-POL", "TR-APR"],
+    1: ["TR-ENV", "TR-SIG", "TR-POL", "TR-APR", "TR-RTE", "TR-SCA"],
+    2: ["TR-ENV", "TR-SIG", "TR-POL", "TR-APR", "TR-RTE", "TR-SCA", "TR-TXN", "TR-ANC"],
 }
 
 
@@ -43,6 +43,9 @@ def run(
 
     if "TR-POL" in active:
         results["TR-POL"] = tr_pol.check(trace, policy_resolver=policy_resolver)
+
+    if "TR-APR" in active:
+        results["TR-APR"] = tr_apr.check(trace, level)
 
     if "TR-RTE" in active:
         results["TR-RTE"] = tr_rte.check(trace, level, expected_nonce=expected_nonce)

@@ -12,6 +12,11 @@ Coverage:
 - slsa_level out of range (4 and -1) rejected by schema and TR-SCA-001
 - transparency with http:// rejected by TR-ANC-001
 - Missing build_provenance rejected by schema (runtime already covered in test_schema.py)
+- appraisal.status outside the enum, and an absent or non-object appraisal, rejected by TR-APR-001
+- appraisal.verifier absent or not an absolute URI rejected by TR-APR-002
+- appraisal.policy_ref present and not an absolute URI rejected by TR-APR-003; absent is a skip
+- appraisal.timestamp in the future or not an integer rejected by TR-APR-004; absent is a skip
+- appraisal.status not affirming rejected by TR-APR-005 from Level 1; skipped at Level 0
 """
 
 from __future__ import annotations
@@ -22,7 +27,7 @@ import time
 import jsonschema
 import pytest
 
-from trace_tests.modules import tr_anc, tr_env, tr_rte, tr_sca
+from trace_tests.modules import tr_anc, tr_apr, tr_env, tr_rte, tr_sca
 from trace_tests.result import Status
 
 
@@ -266,3 +271,139 @@ class TestMissingRequiredFields:
         assert all(f.failed() for f in findings), (
             f"Missing transparency must produce only FAIL findings; got {findings}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Appraisal
+# ---------------------------------------------------------------------------
+
+def _apr(record, level=0):
+    """TR-APR findings for *record*, keyed by code."""
+    return {f.code: f for f in tr_apr.check(record, level)}
+
+
+@pytest.mark.level0
+@pytest.mark.negative
+class TestAppraisalStatus:
+    """appraisal.status must be one of the four values the schema enumerates."""
+
+    def test_status_outside_the_enum_fails_schema(self, schema, valid_level0):
+        bad = _mutate(valid_level0, "appraisal", "status", "verified")
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.validate(bad, schema)
+
+    def test_status_outside_the_enum_fails_conformance(self, valid_level0):
+        bad = _mutate(valid_level0, "appraisal", "status", "verified")
+        assert _apr(bad)["TR-APR-001"].status is Status.FAIL
+
+    def test_non_string_status_fails_schema(self, schema, valid_level0):
+        bad = _mutate(valid_level0, "appraisal", "status", 7)
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.validate(bad, schema)
+
+    def test_non_string_status_fails_conformance(self, valid_level0):
+        bad = _mutate(valid_level0, "appraisal", "status", 7)
+        assert _apr(bad)["TR-APR-001"].status is Status.FAIL
+
+    def test_missing_appraisal_fails_schema(self, schema, valid_level0):
+        bad = _delete(valid_level0, "appraisal")
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.validate(bad, schema)
+
+    def test_missing_appraisal_fails_conformance(self, valid_level0):
+        bad = _delete(valid_level0, "appraisal")
+        findings = tr_apr.check(bad, 0)
+        assert len(findings) == 1, f"absence is one finding, not a cascade; got {findings}"
+        assert findings[0].code == "TR-APR-001"
+        assert findings[0].failed()
+
+    def test_non_object_appraisal_fails_without_raising(self, valid_level0):
+        """A string where an object belongs must be reported, not thrown."""
+        bad = _mutate(valid_level0, "appraisal", "affirming")
+        findings = tr_apr.check(bad, 0)
+        assert len(findings) == 1
+        assert findings[0].code == "TR-APR-001"
+        assert findings[0].failed()
+
+
+@pytest.mark.level0
+@pytest.mark.negative
+class TestAppraisalVerifier:
+    """appraisal.verifier must be an absolute URI, so a reader can dereference it."""
+
+    def test_relative_verifier_passes_schema_but_fails_conformance(self, schema, valid_level0):
+        """`format: "uri"` is an annotation; the module is what enforces it."""
+        bad = _mutate(valid_level0, "appraisal", "verifier", "nvidia-openshell/0.3.0")
+        jsonschema.validate(bad, schema)
+        assert _apr(bad)["TR-APR-002"].status is Status.FAIL
+
+    def test_verifier_with_whitespace_fails_conformance(self, valid_level0):
+        bad = _mutate(valid_level0, "appraisal", "verifier", "https://v.example/ a")
+        finding = _apr(bad)["TR-APR-002"]
+        assert finding.failed()
+        assert "whitespace" in finding.message
+
+    def test_missing_verifier_fails_schema(self, schema, valid_level0):
+        bad = _delete(valid_level0, "appraisal", "verifier")
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.validate(bad, schema)
+
+    def test_missing_verifier_fails_conformance(self, valid_level0):
+        bad = _delete(valid_level0, "appraisal", "verifier")
+        assert _apr(bad)["TR-APR-002"].status is Status.FAIL
+
+
+@pytest.mark.level0
+@pytest.mark.negative
+class TestAppraisalPolicyRef:
+    """appraisal.policy_ref is optional, and checked for shape only when present."""
+
+    def test_relative_policy_ref_passes_schema_but_fails_conformance(self, schema, valid_level0):
+        bad = _mutate(valid_level0, "appraisal", "policy_ref", "./policies/v1")
+        jsonschema.validate(bad, schema)
+        assert _apr(bad)["TR-APR-003"].status is Status.FAIL
+
+    def test_policy_ref_with_a_broken_scheme_fails_conformance(self, valid_level0):
+        bad = _mutate(valid_level0, "appraisal", "policy_ref", "ht tp://x")
+        assert _apr(bad)["TR-APR-003"].status is Status.FAIL
+
+    def test_absent_policy_ref_skips_rather_than_passing(self, valid_level0):
+        """The base fixture omits it. A skip says nothing was checked; a pass would lie."""
+        assert "policy_ref" not in valid_level0["appraisal"]
+        assert _apr(valid_level0)["TR-APR-003"].status is Status.SKIP
+
+
+@pytest.mark.level0
+@pytest.mark.negative
+class TestAppraisalTimestamp:
+    """appraisal.timestamp is optional, and must not be in the future when present."""
+
+    def test_future_timestamp_fails_conformance(self, valid_level0):
+        bad = _mutate(valid_level0, "appraisal", "timestamp", int(time.time()) + 3600)
+        finding = _apr(bad)["TR-APR-004"]
+        assert finding.failed()
+        assert "future" in finding.message.lower()
+
+    def test_string_timestamp_fails_conformance(self, valid_level0):
+        bad = _mutate(valid_level0, "appraisal", "timestamp", "1748000042")
+        assert _apr(bad)["TR-APR-004"].status is Status.FAIL
+
+    def test_absent_timestamp_skips_rather_than_passing(self, valid_level0):
+        assert "timestamp" not in valid_level0["appraisal"]
+        assert _apr(valid_level0)["TR-APR-004"].status is Status.SKIP
+
+
+@pytest.mark.level0
+@pytest.mark.negative
+class TestAppraisalAffirmingFromLevelOne:
+    """docs/levels.md requires an affirming appraisal at Level 1, and its own
+    minimum conformant Level 0 record carries "none". Both must hold."""
+
+    def test_non_affirming_status_passes_schema_but_fails_at_level_one(self, schema, valid_level0):
+        bad = _mutate(valid_level0, "appraisal", "status", "none")
+        jsonschema.validate(bad, schema)
+        assert _apr(bad, 1)["TR-APR-005"].status is Status.FAIL
+
+    def test_non_affirming_status_skips_at_level_zero(self, valid_level0):
+        bad = _mutate(valid_level0, "appraisal", "status", "none")
+        assert _apr(bad, 0)["TR-APR-005"].status is Status.SKIP
