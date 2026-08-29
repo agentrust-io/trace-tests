@@ -1,6 +1,6 @@
 # Test Modules
 
-The TRACE conformance suite is divided into seven modules. Each module maps to a section of the TRACE specification.
+The TRACE conformance suite is divided into eight modules. Each module maps to a section of the TRACE specification.
 
 | Module                                                                      | ID Prefix | Spec Section | What It Tests                                                                                                                                                                              |
 | --------------------------------------------------------------------------- | --------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -8,6 +8,7 @@ The TRACE conformance suite is divided into seven modules. Each module maps to a
 | [Signature](https://tests.agentrust-io.com/docs/modules/tr-sig/index.md)    | TR-SIG    | §3.2.1       | Private key leak detection, key type support, and the Ed25519 signature verification outcome                                                                                               |
 | [Runtime](https://tests.agentrust-io.com/docs/modules/tr-rte/index.md)      | TR-RTE    | §3.1         | TEE platform enum, measurement format, RIM URI scheme                                                                                                                                      |
 | [Policy](https://tests.agentrust-io.com/docs/modules/tr-pol/index.md)       | TR-POL    | §3.1         | Policy bundle hash format, enforcement mode values, and whether the bundle at `policy_uri` has the declared digest                                                                         |
+| [Appraisal](https://tests.agentrust-io.com/docs/modules/tr-apr/index.md)    | TR-APR    | §3.1         | Appraisal status enum, verifier URI form, `policy_ref` URI form, and timestamp plausibility. The appraisal policy is never resolved                                                        |
 | [Transcript](https://tests.agentrust-io.com/docs/modules/tr-txn/index.md)   | TR-TXN    | §3.1         | Tool-call transcript hash binding                                                                                                                                                          |
 | [Transparency](https://tests.agentrust-io.com/docs/modules/tr-anc/index.md) | TR-ANC    | §3.2         | SCITT receipt URI form (TR-ANC-001), and offline replay of the inclusion proof against the committed Merkle root when a receipt is supplied (TR-ANC-002). The URI itself is never resolved |
 | [Provenance](https://tests.agentrust-io.com/docs/modules/tr-sca/index.md)   | TR-SCA    | §3.1         | SLSA provenance level and digest format                                                                                                                                                    |

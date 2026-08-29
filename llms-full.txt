@@ -221,15 +221,15 @@ Error codes follow the form `TR-<MODULE>-<NNN>`. A failing or unverified finding
 
 TRACE defines three conformance levels. Higher levels require all lower-level modules plus additional ones.
 
-| Level | Required Modules         | Use Case                                 |
-| ----- | ------------------------ | ---------------------------------------- |
-| **0** | TR-ENV, TR-SIG, TR-POL   | Software-only development and staging    |
-| **1** | Level 0 + TR-RTE, TR-SCA | Production TEE-attested records          |
-| **2** | Level 1 + TR-TXN, TR-ANC | Full records with transparency anchoring |
+| Level | Required Modules               | Use Case                                 |
+| ----- | ------------------------------ | ---------------------------------------- |
+| **0** | TR-ENV, TR-SIG, TR-POL, TR-APR | Software-only development and staging    |
+| **1** | Level 0 + TR-RTE, TR-SCA       | Production TEE-attested records          |
+| **2** | Level 1 + TR-TXN, TR-ANC       | Full records with transparency anchoring |
 
 ## Level 0 — Software-only
 
-Level 0 records are signed with a software key. The `runtime.platform` must be `"software-only"`. All-zero measurement is conventional for development use.
+Level 0 records are signed with a software key. The `runtime.platform` must be `"software-only"`. All-zero measurement is conventional for development use. The `appraisal` block must be present and well-formed — a recognised `status`, a `verifier` that is an absolute URI — but Level 0 does not require the appraisal to affirm.
 
 **Minimum conformant Level 0 record:**
 
@@ -282,12 +282,15 @@ Level 0 records are signed with a software key. The `runtime.platform` must be `
 - `cnf.jwk` missing, of an unsupported key type, or carrying private key material (`d`) — TR-SIG-004
 - Signature does not verify against `cnf.jwk` — TR-SIG-005
 - `policy.policy_uri` is not an absolute URI, or the bundle it resolves to does not have the digest `policy.bundle_hash` declares — TR-POL-003. The malformed case is reported with or without a resolver: a reference the record got wrong needs no network to detect
+- `appraisal` is absent or not an object, or `appraisal.status` is not one of the four values the schema enumerates — TR-APR-001
+- `appraisal.verifier` is absent or is not an absolute URI — TR-APR-002
+- `appraisal.policy_ref` or `appraisal.timestamp` is present and malformed — TR-APR-003, TR-APR-004. Absent, either one is skipped rather than passed
 
 ______________________________________________________________________
 
 ## Level 1 — TEE Attestation
 
-Level 1 adds hardware attestation. `runtime.platform` must be a value from the `runtime.platform` enum in `schemas/trace-claim.json` other than `software-only`, which carries no hardware attestation evidence. The measurement must be non-zero. `appraisal.status` must be `"affirming"`.
+Level 1 adds hardware attestation. `runtime.platform` must be a value from the `runtime.platform` enum in `schemas/trace-claim.json` other than `software-only`, which carries no hardware attestation evidence. The measurement must be non-zero. `appraisal.status` must be `"affirming"` — TR-APR-005.
 
 **Minimum conformant Level 1 record** (changes from Level 0 in bold context):
 
@@ -337,7 +340,7 @@ Level 1 adds hardware attestation. `runtime.platform` must be a value from the `
 - `runtime.platform` is `"software-only"` — TR-RTE-001
 - `runtime.measurement` is all zeros — TR-RTE-002 (all-zero is invalid at Level 1)
 - `build_provenance` missing entirely — TR-SCA-001, TR-SCA-002
-- `appraisal.status` is `"none"` — while not a hard schema violation, a conformant Level 1 record should carry `"affirming"`
+- `appraisal.status` is `"none"` — while not a hard schema violation, a conformant Level 1 record should carry `"affirming"`; TR-APR-005 reports this from Level 1 and skips it at Level 0
 
 ______________________________________________________________________
 
@@ -401,7 +404,7 @@ The certification program (launching 2027) will require Level 1 at minimum.
 
 # Test Modules
 
-The TRACE conformance suite is divided into seven modules. Each module maps to a section of the TRACE specification.
+The TRACE conformance suite is divided into eight modules. Each module maps to a section of the TRACE specification.
 
 | Module                                                                      | ID Prefix | Spec Section | What It Tests                                                                                                                                                                              |
 | --------------------------------------------------------------------------- | --------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -409,6 +412,7 @@ The TRACE conformance suite is divided into seven modules. Each module maps to a
 | [Signature](https://tests.agentrust-io.com/docs/modules/tr-sig/index.md)    | TR-SIG    | §3.2.1       | Private key leak detection, key type support, and the Ed25519 signature verification outcome                                                                                               |
 | [Runtime](https://tests.agentrust-io.com/docs/modules/tr-rte/index.md)      | TR-RTE    | §3.1         | TEE platform enum, measurement format, RIM URI scheme                                                                                                                                      |
 | [Policy](https://tests.agentrust-io.com/docs/modules/tr-pol/index.md)       | TR-POL    | §3.1         | Policy bundle hash format, enforcement mode values, and whether the bundle at `policy_uri` has the declared digest                                                                         |
+| [Appraisal](https://tests.agentrust-io.com/docs/modules/tr-apr/index.md)    | TR-APR    | §3.1         | Appraisal status enum, verifier URI form, `policy_ref` URI form, and timestamp plausibility. The appraisal policy is never resolved                                                        |
 | [Transcript](https://tests.agentrust-io.com/docs/modules/tr-txn/index.md)   | TR-TXN    | §3.1         | Tool-call transcript hash binding                                                                                                                                                          |
 | [Transparency](https://tests.agentrust-io.com/docs/modules/tr-anc/index.md) | TR-ANC    | §3.2         | SCITT receipt URI form (TR-ANC-001), and offline replay of the inclusion proof against the committed Merkle root when a receipt is supplied (TR-ANC-002). The URI itself is never resolved |
 | [Provenance](https://tests.agentrust-io.com/docs/modules/tr-sca/index.md)   | TR-SCA    | §3.1         | SLSA provenance level and digest format                                                                                                                                                    |
@@ -547,6 +551,16 @@ All TRACE test failures emit a structured error code of the form `TR-<MODULE>-<N
 | TR-POL-001 | `policy.bundle_hash` is not a valid `sha256:` or `sha384:` digest                                                                                                                                                                                                              | Compute `sha256:` + 64 hex chars, or `sha384:` + 96 hex chars, over your policy bundle bytes. Both are accepted by the schema and by the module                            |
 | TR-POL-002 | `policy.enforcement_mode` is not `enforce`, `advisory`, `silent`, or `declared`                                                                                                                                                                                                | Replace `"strict"` or `"monitor"` with one of the four accepted values; `"declared"` is the honest value for a producer that binds a policy without evaluating it          |
 | TR-POL-003 | `policy.policy_uri` is not an absolute URI, or the bundle it resolves to does not have the digest `policy.bundle_hash` declares. Unverified when a resolver was supplied and the bundle could not be read; skipped when no `policy_uri` is present or no resolver was supplied | Point `policy_uri` at the bundle whose bytes hash to `bundle_hash`. A record that cites a bundle it cannot be checked against is reported as unverified rather than passed |
+
+## TR-APR — Appraisal
+
+| Code       | Description                                                                                                                                          | How to fix                                                                                                                                                                                                                      |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TR-APR-001 | `appraisal` is absent or not an object, or `appraisal.status` is absent or not one of `affirming`, `warning`, `contraindicated`, `none`              | Set `appraisal.status` to one of the four values the schema enumerates. An absent or non-object `appraisal` is reported as this code alone, not as a cascade                                                                    |
+| TR-APR-002 | `appraisal.verifier` is absent, not a string, or not an absolute URI                                                                                 | Set `appraisal.verifier` to the absolute URI identifying the verifier that produced the appraisal. A relative reference is rejected: the schema asks for `format: "uri"`, and a reader cannot dereference a name with no scheme |
+| TR-APR-003 | `appraisal.policy_ref` is present and is not an absolute URI. Skipped when the field is absent, which is permitted                                   | Point `policy_ref` at the appraisal policy with an absolute URI, or omit it. Only the shape of the name is checked; TR-APR never resolves it                                                                                    |
+| TR-APR-004 | `appraisal.timestamp` is present and is not an integer of epoch seconds, or is in the future. Skipped when the field is absent, which is permitted   | Set `appraisal.timestamp` to the epoch second the appraisal was produced. An appraisal dated in the future asserts something that has not happened, on the same ground TR-ENV-002 applies to `iat`                              |
+| TR-APR-005 | `appraisal.status` is not `affirming` at Level 1 or above. Skipped at Level 0, where `docs/levels.md`'s own minimum conformant record carries `none` | Re-run the appraisal until it affirms, or check the record at Level 0                                                                                                                                                           |
 
 ## TR-TXN — Transcript
 

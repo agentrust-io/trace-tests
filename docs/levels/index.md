@@ -2,15 +2,15 @@
 
 TRACE defines three conformance levels. Higher levels require all lower-level modules plus additional ones.
 
-| Level | Required Modules         | Use Case                                 |
-| ----- | ------------------------ | ---------------------------------------- |
-| **0** | TR-ENV, TR-SIG, TR-POL   | Software-only development and staging    |
-| **1** | Level 0 + TR-RTE, TR-SCA | Production TEE-attested records          |
-| **2** | Level 1 + TR-TXN, TR-ANC | Full records with transparency anchoring |
+| Level | Required Modules               | Use Case                                 |
+| ----- | ------------------------------ | ---------------------------------------- |
+| **0** | TR-ENV, TR-SIG, TR-POL, TR-APR | Software-only development and staging    |
+| **1** | Level 0 + TR-RTE, TR-SCA       | Production TEE-attested records          |
+| **2** | Level 1 + TR-TXN, TR-ANC       | Full records with transparency anchoring |
 
 ## Level 0 — Software-only
 
-Level 0 records are signed with a software key. The `runtime.platform` must be `"software-only"`. All-zero measurement is conventional for development use.
+Level 0 records are signed with a software key. The `runtime.platform` must be `"software-only"`. All-zero measurement is conventional for development use. The `appraisal` block must be present and well-formed — a recognised `status`, a `verifier` that is an absolute URI — but Level 0 does not require the appraisal to affirm.
 
 **Minimum conformant Level 0 record:**
 
@@ -63,12 +63,15 @@ Level 0 records are signed with a software key. The `runtime.platform` must be `
 - `cnf.jwk` missing, of an unsupported key type, or carrying private key material (`d`) — TR-SIG-004
 - Signature does not verify against `cnf.jwk` — TR-SIG-005
 - `policy.policy_uri` is not an absolute URI, or the bundle it resolves to does not have the digest `policy.bundle_hash` declares — TR-POL-003. The malformed case is reported with or without a resolver: a reference the record got wrong needs no network to detect
+- `appraisal` is absent or not an object, or `appraisal.status` is not one of the four values the schema enumerates — TR-APR-001
+- `appraisal.verifier` is absent or is not an absolute URI — TR-APR-002
+- `appraisal.policy_ref` or `appraisal.timestamp` is present and malformed — TR-APR-003, TR-APR-004. Absent, either one is skipped rather than passed
 
 ______________________________________________________________________
 
 ## Level 1 — TEE Attestation
 
-Level 1 adds hardware attestation. `runtime.platform` must be a value from the `runtime.platform` enum in `schemas/trace-claim.json` other than `software-only`, which carries no hardware attestation evidence. The measurement must be non-zero. `appraisal.status` must be `"affirming"`.
+Level 1 adds hardware attestation. `runtime.platform` must be a value from the `runtime.platform` enum in `schemas/trace-claim.json` other than `software-only`, which carries no hardware attestation evidence. The measurement must be non-zero. `appraisal.status` must be `"affirming"` — TR-APR-005.
 
 **Minimum conformant Level 1 record** (changes from Level 0 in bold context):
 
@@ -118,7 +121,7 @@ Level 1 adds hardware attestation. `runtime.platform` must be a value from the `
 - `runtime.platform` is `"software-only"` — TR-RTE-001
 - `runtime.measurement` is all zeros — TR-RTE-002 (all-zero is invalid at Level 1)
 - `build_provenance` missing entirely — TR-SCA-001, TR-SCA-002
-- `appraisal.status` is `"none"` — while not a hard schema violation, a conformant Level 1 record should carry `"affirming"`
+- `appraisal.status` is `"none"` — while not a hard schema violation, a conformant Level 1 record should carry `"affirming"`; TR-APR-005 reports this from Level 1 and skips it at Level 0
 
 ______________________________________________________________________
 
