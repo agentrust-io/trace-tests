@@ -50,6 +50,32 @@ def _canonical_json(d: dict[str, Any]) -> bytes:
     return rfc8785.dumps(d)
 
 
+def _canonical_body(d: dict[str, Any]) -> tuple[bytes | None, str]:
+    """Canonical bytes for *d*, or ``None`` and the reason there are none.
+
+    Two contracts meet here and they disagree. ``_canonical_json`` raises by design: it
+    is the RFC 8785 serializer, and a value JCS has no form for has no canonical bytes,
+    so there is nothing for it to return. ``runner.run`` calls every module with no
+    ``try``, so a module that lets that reach the caller ends the run and the record is
+    neither passed nor failed.
+
+    This is the boundary between them. ``_canonical_json`` keeps raising, because the
+    canonicalization tests compare its bytes directly and a wrapper that swallowed the
+    error would hide a real serializer defect. Callers that must return a verdict use
+    this instead.
+
+    ``IntegerDomainError`` and ``FloatDomainError`` both derive from
+    ``CanonicalizationError``, so one clause covers all three: an integer outside the JCS
+    safe range, a non-finite float, and a string carrying a lone surrogate. All three are
+    ordinary JSON. ``json.loads`` accepts them, ``load_record`` has no reason to refuse
+    them, and before this they reached the CLI as a traceback.
+    """
+    try:
+        return _canonical_json(d), ""
+    except rfc8785.CanonicalizationError as exc:
+        return None, str(exc)
+
+
 def _verify_ed25519(pub_x: str, sig_b64: str, body: bytes) -> tuple[bool, str]:
     """Verify *sig_b64* over *body*, returning ``(ok, message)``.
 
@@ -126,7 +152,18 @@ def check_cmcp_runtime(record: dict[str, Any]) -> list[Finding]:
         findings.append(Finding("TR-SIG-002", Status.FAIL, "TR-SIG-002: cnf.jwk.x is missing"))
         return findings
 
-    body = _canonical_json({k: v for k, v in record.items() if k != "signature"})
+    body, why = _canonical_body({k: v for k, v in record.items() if k != "signature"})
+    if body is None:
+        # Not "verification failed". No signature over this claim could verify, because
+        # the bytes a signature is taken over do not exist. A consumer acting on the
+        # other reading would go looking for a key problem.
+        findings.append(Finding(
+            "TR-SIG-001", Status.FAIL,
+            f"TR-SIG-001: claim has no RFC 8785 canonical form, so there are no bytes "
+            f"to check the signature against ({why})",
+        ))
+        return findings
+
     ok, msg = _verify_ed25519(x, sig, body)
     status = Status.PASS if ok else Status.FAIL
     findings.append(Finding("TR-SIG-001", status, msg))
@@ -180,10 +217,17 @@ def check(trace: dict[str, Any], record: dict[str, Any], fmt: str, level: int = 
 
     sig = trace.get("signature", "")
     if sig and kty == "OKP" and crv == _ED25519_CRV and jwk.get("x"):
-        body = _canonical_json({k: v for k, v in trace.items() if k != "signature"})
-        ok, msg = _verify_ed25519(jwk["x"], sig, body)
-        status = Status.PASS if ok else Status.FAIL
-        findings.append(Finding("TR-SIG-005", status, msg))
+        body, why = _canonical_body({k: v for k, v in trace.items() if k != "signature"})
+        if body is None:
+            findings.append(Finding(
+                "TR-SIG-005", Status.FAIL,
+                f"TR-SIG-005: record has no RFC 8785 canonical form, so there are no "
+                f"bytes to check the signature against ({why})",
+            ))
+        else:
+            ok, msg = _verify_ed25519(jwk["x"], sig, body)
+            status = Status.PASS if ok else Status.FAIL
+            findings.append(Finding("TR-SIG-005", status, msg))
     elif sig:
         findings.append(Finding(
             "TR-SIG-005", Status.FAIL,
