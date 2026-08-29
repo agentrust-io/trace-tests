@@ -25,7 +25,7 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
-from trace_tests.modules.unverified import unverified_fails
+from trace_tests.modules.unverified import finding_counts_as_level_failure
 from trace_tests.result import Finding, Status
 
 __all__ = [
@@ -107,13 +107,17 @@ class ReportData:
 
 
 def _tally(results: dict[str, list[Finding]], level: int) -> tuple[int, int]:
-    failures = sum(1 for fs in results.values() for f in fs if f.failed())
+    failures = sum(
+        1
+        for findings in results.values()
+        for finding in findings
+        if finding_counts_as_level_failure(finding, level)
+    )
     unverified_findings = [f for fs in results.values() for f in fs if f.unverified()]
     # Mirrors the CLI: an unverified finding is a failure from the level its code
     # is registered at. A report that called such a record "PASS" at a level that
     # required the check would be worse than no report. Per-code rather than
     # blanket; an unregistered code fails from level 1, as the blanket rule did.
-    failures += sum(1 for f in unverified_findings if unverified_fails(f.code, level))
     return failures, len(unverified_findings)
 
 

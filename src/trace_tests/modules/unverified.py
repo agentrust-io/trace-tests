@@ -22,6 +22,8 @@ registration guard turns red rather than the run turning quietly permissive.
 
 from __future__ import annotations
 
+from trace_tests.result import Finding
+
 #: Lowest conformance level at which an unverified finding under this code
 #: counts as a failure. Registered here and in ``docs/levels.md``; the two are
 #: held equal by ``tests/test_docs_match_the_modules.py``.
@@ -38,3 +40,12 @@ DEFAULT_FAILS_FROM_LEVEL = 1
 def unverified_fails(code: str, level: int) -> bool:
     """Return True when an unverified finding under *code* must fail at *level*."""
     return level >= UNVERIFIED_FAILS_FROM_LEVEL.get(code, DEFAULT_FAILS_FROM_LEVEL)
+
+
+def finding_counts_as_level_failure(finding: Finding, level: int) -> bool:
+    """Return whether one finding contributes failure at one level."""
+    if finding.failed():
+        return True
+    if finding.unverified():
+        return unverified_fails(finding.code, level)
+    return False
