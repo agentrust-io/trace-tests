@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import datetime as _dt
-import json
 import importlib.metadata
+import json
 import pathlib
 import re
 import sys
@@ -17,7 +17,7 @@ from trace_tests import __version__
 from trace_tests import report as report_mod
 from trace_tests.loader import LoadError, load_record
 from trace_tests.modules.tr_env import DEFAULT_MAX_AGE_SECONDS
-from trace_tests.modules.unverified import unverified_fails
+from trace_tests.modules.unverified import finding_counts_as_level_failure
 from trace_tests.result import Status
 from trace_tests.runner import run
 
@@ -50,30 +50,22 @@ def _print_report(path: str, fmt: str, level: int, results: dict[str, list[Any]]
     skips = 0
     passes = 0
     unverified = 0
-    unverified_failing = 0
-
     for module, findings in results.items():
         for f in findings:
             prefix = _fmt_status(f.status)
             click.echo(f"  {module}  {prefix}  {f.message}")
-            if f.failed():
-                failures += 1
-            elif f.passed():
+            counts_as_failure = finding_counts_as_level_failure(f, level)
+            failures += int(counts_as_failure)
+            if f.passed():
                 passes += 1
             elif f.unverified():
                 unverified += 1
-                if unverified_fails(f.code, level):
-                    unverified_failing += 1
-            else:
+            elif f.skipped():
                 skips += 1
 
-    # Defense in depth: an unverified finding must fail the run from the level
-    # its code is registered at, even if a module forgot to emit a hard FAIL.
-    # The level is per-code rather than blanket; an unregistered code fails
-    # from level 1, which is what the blanket rule did for all of them.
-    failures += unverified_failing
-
-    total = passes + failures + skips + (unverified - unverified_failing)
+    # Contribution is projected exactly once per finding above. Status counters
+    # remain presentation data and must not independently decide the verdict.
+    total = sum(len(findings) for findings in results.values())
     click.echo("")
     if failures == 0:
         if unverified:
