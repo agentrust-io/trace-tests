@@ -11,8 +11,18 @@ finds them by walking the AST for a set of string constants, so a compiled regex
 is invisible to it by construction. That is why these eleven were unguarded
 while the five enum copies were not.
 
-The schema sites are named here rather than discovered by walking, so a seventh
-digest field appearing later fails the count below instead of joining silently.
+The schema sites are named here rather than discovered, and a walk checks the
+list against the schema: a seventh digest field appearing in the schema fails
+`test_no_digest_site_in_the_schema_is_missing_from_the_list` instead of joining
+silently. The list stays named, so adding a site is still a decision; it just
+cannot be skipped, and a listed entry naming no schema site fails from the
+other side.
+
+The compiled copies get no such walk. `enum_drift.py` cannot see a compiled
+regex and neither can a walk of the schema, so nothing discovers a twelfth
+compiled copy; `assert len(COMPILED_COPIES) == 5` marks that boundary rather
+than closing it. That gap is stated here because the schema half no longer
+shares it.
 
 Near misses, deliberately not listed: src/trace_tests/inclusion.py
 and tests/test_report.py each pin a sha256-only pattern. That is a
@@ -105,12 +115,37 @@ def test_a_compiled_digest_copy_matches_the_schema(label, get_copy, schema) -> N
     )
 
 
-def test_every_known_site_is_listed() -> None:
-    """A guard on the guard, in the shape `test_enum_parity.py` already uses.
+def test_no_digest_site_in_the_schema_is_missing_from_the_list(schema) -> None:
+    walked: set[tuple[str, str]] = set()
 
-    Eleven sites carry this pattern: six in the schema and five compiled. Adding
-    a twelfth without listing it here would leave it unguarded, which is the
-    state this file exists to end.
+    def visit(node: object, parent: str | None, key: str | None) -> None:
+        if isinstance(node, dict):
+            pattern = node.get("pattern")
+            if isinstance(pattern, str) and pattern.startswith("^sha") and parent and key:
+                walked.add((parent, key))
+            for name, value in node.items():
+                if name == "properties" and isinstance(value, dict):
+                    for child, sub in value.items():
+                        visit(sub, key, child)
+                else:
+                    visit(value, parent, key)
+
+    visit(schema, None, None)
+    assert walked == set(SCHEMA_SITES), (
+        "the schema's digest-shaped fields and SCHEMA_SITES disagree\n"
+        f"  in the schema, not listed: {sorted(walked - set(SCHEMA_SITES))}\n"
+        f"  listed, not in the schema: {sorted(set(SCHEMA_SITES) - walked)}"
+    )
+
+
+def test_every_known_site_is_listed() -> None:
+    """The compiled half of the guard, which no walk can supply.
+
+    The schema half is now checked against the schema itself by
+    `test_no_digest_site_in_the_schema_is_missing_from_the_list`, so the count
+    that stood in for it here is removed rather than kept alongside. A compiled
+    copy is a compiled regex: `enum_drift.py` walks the AST for set literals and
+    cannot see one, and a walk of the schema cannot see one either. This count is
+    all that marks a twelfth compiled copy going unlisted.
     """
-    assert len(SCHEMA_SITES) == 6
     assert len(COMPILED_COPIES) == 5
