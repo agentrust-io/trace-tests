@@ -16,6 +16,8 @@ on:
       - "overrides/**"
       - "index.md"
       - "CODE_OF_CONDUCT.md"
+      - "LIMITATIONS.md"
+      - "SPONSORS.md"
   workflow_dispatch:
 
 permissions:
@@ -59,7 +61,7 @@ jobs:
           # measurement/REPORT.md is in the nav as Self-verification.
           if [ -d measurement ]; then cp -r measurement $BUILD/measurement; fi
 
-          for fname in index.md CHANGELOG.md CONTRIBUTING.md CODE_OF_CONDUCT.md PRIVACY.md CNAME; do
+          for fname in index.md CHANGELOG.md CONTRIBUTING.md CODE_OF_CONDUCT.md LIMITATIONS.md SPONSORS.md PRIVACY.md CNAME; do
             if [ -f "$fname" ]; then cp "$fname" "$BUILD/$fname"; fi
           done
 

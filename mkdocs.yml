@@ -175,6 +175,7 @@ nav:
       - Contributing: CONTRIBUTING.md
       - Code of Conduct: CODE_OF_CONDUCT.md
       - Privacy: PRIVACY.md
+      - Known limitations: LIMITATIONS.md
 
 extra_javascript:
   - https://agentrust-io.com/supernav.js

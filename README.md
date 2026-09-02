@@ -87,6 +87,7 @@ and CI.
 | 🗂 Test schemas | [schemas/](schemas/) |
 | 💬 Discussions | [GitHub Discussions](https://github.com/orgs/agentrust-io/discussions) |
 | 📋 Changelog | [CHANGELOG.md](CHANGELOG.md) |
+| ⚠️ Known limitations | [LIMITATIONS.md](LIMITATIONS.md) |
 
 ## Contributing
 
