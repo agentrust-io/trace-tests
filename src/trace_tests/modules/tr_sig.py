@@ -204,7 +204,7 @@ def check(trace: dict[str, Any], record: dict[str, Any], fmt: str, level: int = 
         ))
         return findings
 
-    if kty in _SUPPORTED_KTY:
+    if isinstance(kty, str) and kty in _SUPPORTED_KTY:
         label = f"kty={kty!r}" + (f", crv={crv!r}" if crv else "")
         findings.append(Finding("TR-SIG-004", Status.PASS, f"cnf.jwk key type is supported ({label})"))
     elif kty is None:

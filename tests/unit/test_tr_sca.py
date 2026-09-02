@@ -4,6 +4,8 @@ This module had no unit tests. Its build_provenance-must-be-an-object path measu
 margin 0, meaning it could have been deleted silently.
 """
 
+import pytest
+
 from trace_tests.modules.tr_sca import check
 
 VALID_DIGEST = "sha256:" + "a" * 64
@@ -17,6 +19,17 @@ def _prov(**over):
 
 def test_valid_provenance_passes():
     failed = [f for f in check(_prov()) if f.failed()]
+    assert not failed, failed
+
+
+@pytest.mark.parametrize("slsa_level", [0, 1, 2, 3, 0.0, 1.0, 2.0, 3.0])
+def test_every_schema_integer_slsa_level_passes(slsa_level):
+    """JSON Schema treats numbers with a zero fractional part as integers."""
+    failed = [
+        finding
+        for finding in check(_prov(slsa_level=slsa_level))
+        if finding.code == "TR-SCA-001" and finding.failed()
+    ]
     assert not failed, failed
 
 
