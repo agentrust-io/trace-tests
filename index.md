@@ -28,6 +28,14 @@ trace-tests report --record trust-record.json --html report.html --json report.j
 
 Use `--fail-under 1` to gate CI on a level. Without it the command always exits `0`, which is what you want when you are producing an artifact rather than enforcing a threshold. `report.json` is stable under `schema: agentrust-io/trace-tests/report/1` for dashboards and CI.
 
+CLI reports add an independently versioned `obligation_accounting` member for a
+bounded three-obligation pilot: `TR-APR-001`, `TR-POL-003`, and `TR-SCA-002`.
+The rows and findings come from one execution snapshot, and the report refuses
+an incomplete pilot matrix. This does not claim complete TRACE accounting.
+The extension treats `report/1` as additively extensible; compatibility with
+consumers requiring the exact historical top-level key set is not established.
+See [Known limitations](LIMITATIONS.md) for the trust and replay boundary.
+
 A conformance report that looks authoritative and cannot be checked is the same shape of thing as a control plane writing its own log. So the report tells a reader who does not trust the sender to go and check the record instead, and gives them what they need to do it.
 
 ## Where to start

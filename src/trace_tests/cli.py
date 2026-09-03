@@ -19,7 +19,7 @@ from trace_tests.loader import LoadError, load_record
 from trace_tests.modules.tr_env import DEFAULT_MAX_AGE_SECONDS
 from trace_tests.modules.unverified import finding_counts_as_level_failure
 from trace_tests.result import Status
-from trace_tests.runner import run
+from trace_tests.runner import _run_levels, run
 
 
 def _library_version() -> str | None:
@@ -325,24 +325,20 @@ def report(
     receipt_data = _load_receipt(receipt)
     policy_resolver = _load_policy_resolver(policy_dir)
 
-    results_by_level = {
-        level: run(
-            data,
-            fmt,
-            level,
-            max_age_seconds=max_age,
-            expected_nonce=expected_nonce,
-            receipt=receipt_data,
-            policy_resolver=policy_resolver,
-        )
-        for level in range(max_level + 1)
-    }
+    execution = _run_levels(
+        data,
+        fmt,
+        range(max_level + 1),
+        max_age_seconds=max_age,
+        expected_nonce=expected_nonce,
+        receipt=receipt_data,
+        policy_resolver=policy_resolver,
+    )
 
-    built = report_mod.build(
+    built = report_mod._build_from_execution(
         record=data,
         record_path=record,
-        record_format=fmt,
-        results_by_level=results_by_level,
+        execution=execution,
         suite_version=__version__,
         library_version=_library_version(),
         generated_at=_dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),

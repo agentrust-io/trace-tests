@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Add machine-readable execution accounting for the bounded `TR-APR-001`,
+  `TR-POL-003`, and `TR-SCA-002` pilot to CLI JSON reports. Accounted findings
+  and accounting come from one immutable execution snapshot; unreconciled
+  accounting is rejected on that path, the operational policy-correspondence rule
+  is separated from supporting schema locators and all carry value digests for
+  comparison against the referenced trace-spec bytes, scheduler non-execution
+  carries a reason, and existing verdict policy and CLI exit behavior are unchanged.
+
 ## v0.5.1 — 2026-08-22
 
 - Level 1 and Level 2 verification now requires a verifier-issued challenge via

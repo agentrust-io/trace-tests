@@ -22,6 +22,14 @@ import time
 from typing import Any
 from urllib.parse import urlsplit
 
+from trace_tests.accounting import (
+    BranchRule,
+    ObligationSpec,
+    ProducerRole,
+    _checker_binding,
+    _normative_sources,
+    _observe,
+)
 from trace_tests.result import Finding, Status
 
 #: Mirrors `appraisal.status` in the packaged schema; `test_enum_parity` fails if
@@ -34,6 +42,28 @@ _SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.\-]*$")
 #: `tr_env.py:36`, which is likewise an inline literal rather than a named
 #: constant; `test_tr_apr` asserts the two stay equal.
 _MAX_FUTURE_SKEW_SECONDS = 60
+
+_ACCOUNTING_SPEC = ObligationSpec(
+    "TR-APR-001",
+    "TR-APR",
+    _normative_sources(
+        "/required/8",
+        "/properties/appraisal/type",
+        "/properties/appraisal/required/0",
+        "/properties/appraisal/properties/status/enum",
+    ),
+    _checker_binding("TR-APR"),
+    (
+        BranchRule(
+            "appraisal_missing", ProducerRole.TARGET_COMPLETED, "TR-APR-001", (Status.FAIL,)
+        ),
+        BranchRule(
+            "appraisal_not_object", ProducerRole.TARGET_COMPLETED, "TR-APR-001", (Status.FAIL,)
+        ),
+        BranchRule("status_valid", ProducerRole.TARGET_COMPLETED, "TR-APR-001", (Status.PASS,)),
+        BranchRule("status_invalid", ProducerRole.TARGET_COMPLETED, "TR-APR-001", (Status.FAIL,)),
+    ),
+)
 
 
 def _not_absolute_uri(value: str) -> str | None:
@@ -123,12 +153,23 @@ def check(trace: dict[str, Any], level: int) -> list[Finding]:
     appraisal = trace.get("appraisal")
 
     if appraisal is None:
-        return [Finding("TR-APR-001", Status.FAIL, "TR-APR-001: appraisal is required")]
+        return [
+            _observe(
+                "TR-APR",
+                "appraisal_missing",
+                Finding("TR-APR-001", Status.FAIL, "TR-APR-001: appraisal is required"),
+            )
+        ]
     if not isinstance(appraisal, dict):
         return [
-            Finding(
-                "TR-APR-001", Status.FAIL,
-                f"TR-APR-001: appraisal must be an object, got {type(appraisal).__name__}",
+            _observe(
+                "TR-APR",
+                "appraisal_not_object",
+                Finding(
+                    "TR-APR-001",
+                    Status.FAIL,
+                    f"TR-APR-001: appraisal must be an object, got {type(appraisal).__name__}",
+                ),
             )
         ]
 
@@ -140,13 +181,25 @@ def check(trace: dict[str, Any], level: int) -> list[Finding]:
     # this field with a list.
     if isinstance(status, str) and status in _VALID_STATUS:
         findings.append(
-            Finding("TR-APR-001", Status.PASS, f"appraisal.status is valid ({status!r})")
+            _observe(
+                "TR-APR",
+                "status_valid",
+                Finding("TR-APR-001", Status.PASS, f"appraisal.status is valid ({status!r})"),
+            )
         )
     else:
-        findings.append(Finding(
-            "TR-APR-001", Status.FAIL,
-            f"TR-APR-001: appraisal.status must be one of {sorted(_VALID_STATUS)}, got {status!r}",
-        ))
+        findings.append(
+            _observe(
+                "TR-APR",
+                "status_invalid",
+                Finding(
+                    "TR-APR-001",
+                    Status.FAIL,
+                    "TR-APR-001: appraisal.status must be one of "
+                    f"{sorted(_VALID_STATUS)}, got {status!r}",
+                ),
+            )
+        )
 
     if "verifier" not in appraisal:
         findings.append(
