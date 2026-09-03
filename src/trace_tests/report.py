@@ -284,7 +284,7 @@ def _build_from_execution(
     ).encode("ascii")
     if record_bytes != execution.record_bytes:
         raise ValueError("report record does not match its accounting execution")
-    document = accounting.accounting_document(execution)
+    document = accounting._accounting_document(execution)
     registry = document["registry"]
     if not isinstance(registry, dict):
         raise ValueError("report execution carries no obligation registry")

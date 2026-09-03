@@ -64,7 +64,7 @@ conformance report that looks authoritative and cannot be checked is the same sh
 thing as a control plane writing its own log.
 
 `report.json` is stable under `schema: agentrust-io/trace-tests/report/1` for dashboards
-and CI. Reports produced by the CLI include an additive, independently versioned
+and CI. Reports produced by the CLI include an additive, version-tagged
 `obligation_accounting` object for the bounded `TR-APR-001`, `TR-POL-003`, and
 `TR-SCA-002` pilot. During supported report construction, its rows are reconciled
 against the executable registry identified by `registry_id` and `registry_sha256`.
@@ -74,6 +74,8 @@ resolved value so a reader holding the pinned trace-spec bytes can re-resolve an
 compare it. Accounted JSON, HTML, badge, and verdict projections consume one
 immutable execution-derived snapshot; each requested renderer runs independently,
 and the existing contribution policy continues to determine the report verdict.
+The tag identifies this emitted object shape; the repository does not currently
+ship a separate formal JSON Schema for it.
 
 This treats `report/1` as additively extensible: existing members retain their meaning,
 and `obligation_accounting` is the sole new top-level member. Compatibility with

@@ -23,6 +23,13 @@ from trace_tests.result import Finding, Status
 
 REGISTRY_ID = "agentrust-io/trace-tests/obligation-registry/pilot-1"
 REGISTRY_SCHEMA = "agentrust-io/trace-tests/obligation-registry/1"
+# This sentinel closes the declared three-obligation pilot. Branches, source
+# locators, and checker bindings remain derived from executable checker specs.
+_PILOT_OWNERS = (
+    ("TR-APR-001", "TR-APR"),
+    ("TR-POL-003", "TR-POL"),
+    ("TR-SCA-002", "TR-SCA"),
+)
 _TRACE_TESTS_REPOSITORY = "https://github.com/agentrust-io/trace-tests"
 _TRACE_SPEC_REPOSITORY = "https://github.com/agentrust-io/trace-spec"
 _TRACE_SPEC_REVISION = "c111c2f0fc8df214fe9bc339769cf71d33a4af52"
@@ -237,7 +244,7 @@ class _Execution:
             for row in self._value()["accounting"]["rows"]
         )
 
-    def accounting_document(self) -> dict[str, object]:
+    def _accounting_document(self) -> dict[str, object]:
         return cast(dict[str, object], self._value()["accounting"])
 
 
@@ -859,16 +866,179 @@ def _row_document(row: AccountingRow) -> dict[str, object]:
     }
 
 
-def accounting_document(execution: _Execution) -> dict[str, object]:
+def _frozen_policy_counts(
+    finding: Finding, level: int, contribution_policy: dict[str, object]
+) -> bool:
+    thresholds = contribution_policy.get("unverified_fails_from_level")
+    default = contribution_policy.get("default_fails_from_level")
+    if not isinstance(thresholds, dict) or type(default) is not int:
+        raise ValueError("invalid frozen contribution policy")
+    if any(
+        not isinstance(code, str) or type(value) is not int
+        for code, value in thresholds.items()
+    ):
+        raise ValueError("invalid frozen contribution policy")
+    if finding.failed():
+        return True
+    if finding.unverified():
+        threshold = thresholds.get(finding.code, default)
+        if type(threshold) is not int:
+            raise ValueError("invalid frozen contribution policy")
+        return level >= threshold
+    return False
+
+
+def _validate_document_relations(
+    execution: _Execution,
+    rows: tuple[AccountingRow, ...],
+    registry: dict[str, object],
+) -> None:
+    obligations = registry.get("obligations")
+    if not isinstance(obligations, list) or any(
+        not isinstance(item, dict) for item in obligations
+    ):
+        raise ValueError("pilot registry does not match its rows")
+    registry_identity = tuple(
+        (item.get("key"), item.get("owner")) for item in obligations
+    )
+    if registry_identity != _PILOT_OWNERS:
+        raise ValueError("pilot registry does not match its rows")
+
+    levels = tuple(dict.fromkeys(row.attempted_level for row in rows))
+    registry_keys = tuple(key for key, _owner in registry_identity)
+    expected_cells = tuple((level, key) for level in levels for key in registry_keys)
+    observed_cells = tuple((row.attempted_level, row.obligation_key) for row in rows)
+    if observed_cells != expected_cells:
+        raise ValueError("pilot registry does not match its rows")
+
+    results = execution.compatibility_results
+    policy = registry.get("contribution_policy")
+    if not isinstance(policy, dict):
+        raise ValueError("invalid frozen contribution policy")
+    rules: dict[tuple[str, str], dict[str, object]] = {}
+    owners: dict[str, str] = {}
+    for item in obligations:
+        key = item["key"]
+        owner = item["owner"]
+        branches = item.get("branches")
+        if (
+            not isinstance(key, str)
+            or not isinstance(owner, str)
+            or not isinstance(branches, list)
+        ):
+            raise ValueError("invalid obligation registry")
+        owners[key] = owner
+        for branch in branches:
+            if not isinstance(branch, dict) or not isinstance(
+                branch.get("branch"), str
+            ):
+                raise ValueError("invalid obligation registry")
+            identity = key, branch["branch"]
+            if identity in rules:
+                raise ValueError("duplicate obligation branch")
+            rules[identity] = branch
+
+    for row in rows:
+        rule = rules.get((row.obligation_key, row.producer_branch))
+        if rule is None:
+            raise ValueError("accounting row names an unregistered branch")
+        owner = owners[row.obligation_key]
+        level_results = results.get(row.attempted_level)
+        if not isinstance(level_results, dict):
+            raise ValueError("accounting row lies outside frozen results")
+        findings = level_results.get(owner, [])
+
+        try:
+            expected_applicability, expected_state = _role_projection(
+                ProducerRole(cast(str, rule.get("role")))
+            )
+        except (TypeError, ValueError) as exc:
+            raise ValueError("invalid obligation branch role") from exc
+        if (
+            row.applicability is not expected_applicability
+            or row.evaluation_state is not expected_state
+            or row.prerequisite_code != rule.get("prerequisite_code")
+        ):
+            raise ValueError("accounting row does not match its registered branch")
+
+        registered_code = rule.get("finding_code")
+        registered_statuses = rule.get("finding_statuses")
+        if registered_code is None:
+            if row.finding_code is not None or row.finding_status is not None:
+                raise ValueError("accounting row does not match its registered branch")
+            if row.counts_as_level_failure is not None:
+                raise ValueError("accounting contribution does not match frozen policy")
+            if row.prerequisite_code is not None:
+                prerequisite_statuses = rule.get("prerequisite_statuses")
+                prerequisite_prefix = rule.get("prerequisite_message_prefix")
+                prerequisites = [
+                    finding
+                    for finding in findings
+                    if finding.code == row.prerequisite_code
+                ]
+                if (
+                    not isinstance(prerequisite_statuses, list)
+                    or not isinstance(prerequisite_prefix, str)
+                    or len(prerequisites) != 1
+                    or prerequisites[0].status.value not in prerequisite_statuses
+                    or not prerequisites[0].message.startswith(prerequisite_prefix)
+                    or not _frozen_policy_counts(
+                        prerequisites[0], row.attempted_level, policy
+                    )
+                ):
+                    raise ValueError(
+                        "accounting prerequisite does not match frozen results"
+                    )
+            elif owner in level_results:
+                raise ValueError("scheduler nonexecution row contradicts frozen results")
+            continue
+
+        if not isinstance(registered_code, str) or not isinstance(
+            registered_statuses, list
+        ):
+            raise ValueError("invalid obligation registry")
+        matches = [finding for finding in findings if finding.code == registered_code]
+        if (
+            len(matches) != 1
+            or row.finding_code != matches[0].code
+            or row.finding_status is not matches[0].status
+        ):
+            raise ValueError("accounting row does not match its finding")
+        if row.finding_status.value not in registered_statuses:
+            raise ValueError("accounting row does not match its registered branch")
+        expected_contribution = _frozen_policy_counts(
+            matches[0], row.attempted_level, policy
+        )
+        if row.counts_as_level_failure is not expected_contribution:
+            raise ValueError("accounting contribution does not match frozen policy")
+
+    expected_tallies = []
+    for level, modules in results.items():
+        findings = [
+            finding
+            for module_findings in modules.values()
+            for finding in module_findings
+        ]
+        expected_tallies.append(
+            (
+                level,
+                sum(
+                    _frozen_policy_counts(finding, level, policy)
+                    for finding in findings
+                ),
+                sum(finding.unverified() for finding in findings),
+            )
+        )
+    if execution.report_tallies != tuple(expected_tallies):
+        raise ValueError("report tallies do not match frozen results")
+
+
+def _accounting_document(execution: _Execution) -> dict[str, object]:
     """Return the validated bounded accounting projection used by the JSON report."""
-    document = execution.accounting_document()
+    document = execution._accounting_document()
     rows = execution.rows
     levels = tuple(dict.fromkeys(row.attempted_level for row in rows))
-    expected = tuple(
-        (level, key)
-        for level in levels
-        for key in ("TR-APR-001", "TR-POL-003", "TR-SCA-002")
-    )
+    expected = tuple((level, key) for level in levels for key, _owner in _PILOT_OWNERS)
     observed = tuple((row.attempted_level, row.obligation_key) for row in rows)
     if (
         set(document) != {"registry", "accounting_complete", "rows"}
@@ -892,4 +1062,5 @@ def accounting_document(execution: _Execution) -> dict[str, object]:
         raise ValueError("unexpected obligation registry")
     if registry["sha256"] != digest:
         raise ValueError("obligation registry hash mismatch")
+    _validate_document_relations(execution, rows, registry)
     return document

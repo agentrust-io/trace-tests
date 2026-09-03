@@ -261,7 +261,7 @@ def test_complete_matrix_atomic_views_and_public_report_wire(
     for width in (1, 2, 3):
         levels = tuple(range(width))
         execution = _execute(valid_level0, levels)
-        document = accounting.accounting_document(execution)
+        document = accounting._accounting_document(execution)
         rows = document["rows"]
         assert set(document) == {"registry", "accounting_complete", "rows"}
         assert document["accounting_complete"] is True
@@ -282,7 +282,7 @@ def test_complete_matrix_atomic_views_and_public_report_wire(
         )
 
     execution = _execute(valid_level0)
-    rows = accounting.accounting_document(execution)["rows"]
+    rows = accounting._accounting_document(execution)["rows"]
     assert isinstance(rows, list)
     row_fields = {
         "attempted_level",
@@ -326,14 +326,14 @@ def test_complete_matrix_atomic_views_and_public_report_wire(
     ] == [("digest_valid", C), ("digest_valid", C)]
 
     # Returned findings/documents are copies; neither can splice run B into this snapshot.
-    untouched = accounting.accounting_document(execution)
+    untouched = accounting._accounting_document(execution)
     changed = execution.compatibility_results
     changed[0]["TR-APR"][0].code = "spliced"
     other = _execute({**valid_level0, "appraisal": {"status": "wrong"}}, (0,))
     changed[0]["TR-APR"] = other.compatibility_results[0]["TR-APR"]
-    changed_document = accounting.accounting_document(execution)
-    changed_document["rows"] = accounting.accounting_document(other)["rows"]
-    assert accounting.accounting_document(execution) == untouched
+    changed_document = accounting._accounting_document(execution)
+    changed_document["rows"] = accounting._accounting_document(other)["rows"]
+    assert accounting._accounting_document(execution) == untouched
     assert execution.compatibility_results[0]["TR-APR"][0].code != "spliced"
 
     built = report._build_from_execution(
@@ -347,13 +347,13 @@ def test_complete_matrix_atomic_views_and_public_report_wire(
     rendered = (report.to_json(built), report.to_html(built), report.badge_svg(built))
     parsed = json.loads(rendered[0])
     assert parsed["schema"] == "agentrust-io/trace-tests/report/1"
-    registry = accounting.accounting_document(execution)["registry"]
+    registry = accounting._accounting_document(execution)["registry"]
     assert isinstance(registry, dict)
     assert parsed["obligation_accounting"] == {
         "schema": report.ACCOUNTING_REPORT_SCHEMA,
         "registry_id": registry["id"],
         "registry_sha256": registry["sha256"],
-        **accounting.accounting_document(execution),
+        **accounting._accounting_document(execution),
     }
     assert all("obligation_accounting" not in value for value in rendered[1:])
     help_result = CliRunner().invoke(main, ["report", "--help"])
@@ -396,6 +396,104 @@ def test_report_rejects_incomplete_or_mismatched_execution(
             record={**valid_level0, "subject": "spiffe://example.org/agent/spliced"},
             record_path="record.json",
             execution=execution,
+            suite_version="0.5.1",
+            library_version=None,
+            generated_at="2026-08-31 12:00 UTC",
+        )
+
+
+@pytest.mark.parametrize("attack", ["missing", "duplicate", "substitute"])
+def test_accounted_emission_binds_rows_to_the_exact_pilot_registry(
+    valid_level0: dict[str, Any], attack: str
+) -> None:
+    execution = _execute(valid_level0, (0,))
+    payload = json.loads(execution._payload)
+    registry = payload["accounting"]["registry"]
+    obligations = registry["obligations"]
+
+    if attack == "missing":
+        obligations.pop()
+    elif attack == "duplicate":
+        obligations.append(copy.deepcopy(obligations[-1]))
+    else:
+        obligations[-1]["key"] = "TR-SCA-009"
+
+    body = {key: value for key, value in registry.items() if key != "sha256"}
+    registry["sha256"] = "sha256:" + hashlib.sha256(
+        accounting._canonical_json(body)
+    ).hexdigest()
+    forged = accounting._Execution(accounting._canonical_json(payload))
+
+    with pytest.raises(ValueError, match="pilot registry does not match its rows"):
+        report._build_from_execution(
+            record=valid_level0,
+            record_path="record.json",
+            execution=forged,
+            suite_version="0.5.1",
+            library_version=None,
+            generated_at="2026-08-31 12:00 UTC",
+        )
+
+
+@pytest.mark.parametrize(
+    ("attack", "error"),
+    [
+        ("row_status", "accounting row does not match its finding"),
+        ("row_contribution", "accounting contribution does not match frozen policy"),
+        ("tally", "report tallies do not match frozen results"),
+    ],
+)
+def test_accounted_emission_revalidates_rows_findings_policy_and_tallies(
+    valid_level0: dict[str, Any], attack: str, error: str
+) -> None:
+    execution = _execute(valid_level0, (0,))
+    payload = json.loads(execution._payload)
+    apr = next(
+        row
+        for row in payload["accounting"]["rows"]
+        if row["suite_obligation_key"] == "TR-APR-001"
+    )
+
+    if attack == "row_status":
+        apr["observed_finding"]["status"] = "fail"
+    elif attack == "row_contribution":
+        apr["counts_as_level_failure"] = True
+    else:
+        payload["report_tallies"][0][1] += 1
+
+    forged = accounting._Execution(accounting._canonical_json(payload))
+    with pytest.raises(ValueError, match=error):
+        report._build_from_execution(
+            record=valid_level0,
+            record_path="record.json",
+            execution=forged,
+            suite_version="0.5.1",
+            library_version=None,
+            generated_at="2026-08-31 12:00 UTC",
+        )
+
+
+def test_accounted_emission_requires_a_failing_prerequisite_finding(
+    valid_level0: dict[str, Any],
+) -> None:
+    record = copy.deepcopy(valid_level0)
+    record.pop("policy")
+    execution = _execute(record, (0,))
+    payload = json.loads(execution._payload)
+    modules = dict(payload["results"][0][1])
+    prerequisite = next(
+        finding for finding in modules["TR-POL"] if finding[0] == "TR-POL-001"
+    )
+    prerequisite[1] = "pass"
+    forged = accounting._Execution(accounting._canonical_json(payload))
+
+    with pytest.raises(
+        ValueError, match="accounting prerequisite does not match frozen results"
+    ):
+        report._build_from_execution(
+            record=record,
+            record_path="record.json",
+            execution=forged,
             suite_version="0.5.1",
             library_version=None,
             generated_at="2026-08-31 12:00 UTC",
@@ -490,7 +588,7 @@ def test_all_twenty_one_registered_branches_have_exact_integration_witnesses(
         )
         projected.append(row)
 
-    document = accounting.accounting_document(_execute(valid_level0, (0,)))
+    document = accounting._accounting_document(_execute(valid_level0, (0,)))
     registry = document["registry"]
     assert isinstance(registry, dict)
     registered = {
@@ -558,7 +656,7 @@ def test_corrupt_observation_fails_closed_for_its_named_reason(
 def test_registry_binds_declared_sources_rules_candidate_bytes_and_hash(
     valid_level0: dict[str, Any],
 ) -> None:
-    registry = accounting.accounting_document(_execute(valid_level0, (0,)))["registry"]
+    registry = accounting._accounting_document(_execute(valid_level0, (0,)))["registry"]
     assert isinstance(registry, dict)
     assert set(registry) == {"schema", "id", "contribution_policy", "obligations", "sha256"}
     assert (registry["schema"], registry["id"]) == (
@@ -886,7 +984,7 @@ def test_public_run_inside_resolver_is_isolated_from_accounting_capture(
     assert resolver_calls == 2
     assert (legacy_finding.status, accounted_finding.status) == (Status.PASS, Status.PASS)
     assert (row.evaluation_state, row.finding_status) == (C, Status.PASS)
-    assert accounting.accounting_document(execution)["accounting_complete"] is True
+    assert accounting._accounting_document(execution)["accounting_complete"] is True
     assert accounting._CAPTURE.get() is None
 
 
@@ -1320,7 +1418,7 @@ def test_returned_prerequisite_finding_cannot_mutate_later_in_the_same_run(
 def test_tr_pol_registry_separates_operational_rule_from_schema_support(
     valid_level0: dict[str, Any],
 ) -> None:
-    registry = accounting.accounting_document(_execute(valid_level0, (0,)))["registry"]
+    registry = accounting._accounting_document(_execute(valid_level0, (0,)))["registry"]
     assert isinstance(registry, dict)
     obligation = next(
         item for item in registry["obligations"] if item["key"] == "TR-POL-003"
@@ -1347,6 +1445,7 @@ def test_execution_backed_builder_is_not_a_public_api() -> None:
     assert "build_from_execution" not in report.__all__
     assert not hasattr(report, "build_from_execution")
     assert hasattr(report, "_build_from_execution")
+    assert not hasattr(accounting, "accounting_document")
 
 
 def test_execution_binds_record_format_without_a_report_relabel_seam(
