@@ -190,6 +190,18 @@ class _FrozenContributionPolicy:
     default: int
 
 
+def _exact_execution_int(
+    value: object,
+    field: str,
+    *,
+    maximum: int | None = None,
+) -> int:
+    """Reject JSON booleans/floats before Python equality can treat them as integers."""
+    if type(value) is not int or value < 0 or (maximum is not None and value > maximum):
+        raise ValueError(f"invalid frozen execution integer: {field}")
+    return value
+
+
 @dataclass(frozen=True)
 class _Execution:
     """One canonical snapshot containing both result and accounting views."""
@@ -209,26 +221,37 @@ class _Execution:
 
     @property
     def compatibility_results(self) -> dict[int, dict[str, list[Finding]]]:
-        return {
-            level: {
+        results: dict[int, dict[str, list[Finding]]] = {}
+        for raw_level, modules in self._value()["results"]:
+            level = _exact_execution_int(raw_level, "results.level", maximum=2)
+            if level in results:
+                raise ValueError("duplicate frozen execution level")
+            results[level] = {
                 module: [Finding(code, Status(status), message) for code, status, message in items]
                 for module, items in modules
             }
-            for level, modules in self._value()["results"]
-        }
+        return results
 
     @property
     def report_tallies(self) -> tuple[tuple[int, int, int], ...]:
-        return tuple(
-            (level, failures, unverified)
-            for level, failures, unverified in self._value()["report_tallies"]
-        )
+        tallies = []
+        for raw_level, raw_failures, raw_unverified in self._value()["report_tallies"]:
+            tallies.append(
+                (
+                    _exact_execution_int(raw_level, "report_tallies.level", maximum=2),
+                    _exact_execution_int(raw_failures, "report_tallies.failures"),
+                    _exact_execution_int(raw_unverified, "report_tallies.unverified"),
+                )
+            )
+        return tuple(tallies)
 
     @property
     def rows(self) -> tuple[AccountingRow, ...]:
         return tuple(
             AccountingRow(
-                row["attempted_level"],
+                _exact_execution_int(
+                    row["attempted_level"], "accounting.rows.attempted_level", maximum=2
+                ),
                 row["suite_obligation_key"],
                 Applicability(row["applicability"]),
                 EvaluationState(row["evaluation_state"]),

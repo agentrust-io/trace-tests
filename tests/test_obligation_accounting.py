@@ -520,6 +520,54 @@ def test_accounted_emission_revalidates_rows_findings_policy_and_tallies(
         )
 
 
+@pytest.mark.parametrize(
+    ("field", "bad_value", "error_field"),
+    [
+        ("result_level", False, "results.level"),
+        ("result_level", 0.0, "results.level"),
+        ("tally_level", False, "report_tallies.level"),
+        ("tally_level", 0.0, "report_tallies.level"),
+        ("row_level", False, "accounting.rows.attempted_level"),
+        ("row_level", 0.0, "accounting.rows.attempted_level"),
+        ("failure_count", False, "report_tallies.failures"),
+        ("failure_count", 0.0, "report_tallies.failures"),
+        ("unverified_count", True, "report_tallies.unverified"),
+        ("unverified_count", 1.0, "report_tallies.unverified"),
+    ],
+)
+def test_accounted_emission_requires_exact_integer_machine_fields(
+    valid_level0: dict[str, Any],
+    field: str,
+    bad_value: bool | float,
+    error_field: str,
+) -> None:
+    execution = _execute(valid_level0, (0,))
+    payload = json.loads(execution._payload)
+    if field == "result_level":
+        payload["results"][0][0] = bad_value
+    elif field == "tally_level":
+        payload["report_tallies"][0][0] = bad_value
+    elif field == "row_level":
+        payload["accounting"]["rows"][0]["attempted_level"] = bad_value
+    elif field == "failure_count":
+        payload["report_tallies"][0][1] = bad_value
+    else:
+        payload["report_tallies"][0][2] = bad_value
+
+    forged = accounting._Execution(accounting._canonical_json(payload))
+    with pytest.raises(
+        ValueError, match=rf"invalid frozen execution integer: {error_field}"
+    ):
+        report._build_from_execution(
+            record=valid_level0,
+            record_path="record.json",
+            execution=forged,
+            suite_version="0.5.1",
+            library_version=None,
+            generated_at="2026-09-03 12:00 UTC",
+        )
+
+
 def test_accounted_emission_requires_a_failing_prerequisite_finding(
     valid_level0: dict[str, Any],
 ) -> None:
