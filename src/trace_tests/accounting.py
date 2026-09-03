@@ -904,14 +904,17 @@ def _validate_document_relations(
     if registry_identity != _PILOT_OWNERS:
         raise ValueError("pilot registry does not match its rows")
 
-    levels = tuple(dict.fromkeys(row.attempted_level for row in rows))
+    results = execution.compatibility_results
+    levels = tuple(results)
+    tally_levels = tuple(level for level, _failures, _unverified in execution.report_tallies)
+    if levels != tally_levels or levels not in ((0,), (0, 1), (0, 1, 2)):
+        raise ValueError("frozen execution levels do not match report tallies")
     registry_keys = tuple(key for key, _owner in registry_identity)
     expected_cells = tuple((level, key) for level in levels for key in registry_keys)
     observed_cells = tuple((row.attempted_level, row.obligation_key) for row in rows)
     if observed_cells != expected_cells:
         raise ValueError("pilot registry does not match its rows")
 
-    results = execution.compatibility_results
     policy = registry.get("contribution_policy")
     if not isinstance(policy, dict):
         raise ValueError("invalid frozen contribution policy")
@@ -949,14 +952,19 @@ def _validate_document_relations(
         findings = level_results.get(owner, [])
 
         try:
-            expected_applicability, expected_state = _role_projection(
-                ProducerRole(cast(str, rule.get("role")))
-            )
+            role = ProducerRole(cast(str, rule.get("role")))
+            expected_applicability, expected_state = _role_projection(role)
         except (TypeError, ValueError) as exc:
             raise ValueError("invalid obligation branch role") from exc
+        expected_reason = (
+            f"{owner} is not scheduled at attempted Level {row.attempted_level}"
+            if role is ProducerRole.SCHEDULER_NONEXECUTION_APPLICABLE
+            else None
+        )
         if (
             row.applicability is not expected_applicability
             or row.evaluation_state is not expected_state
+            or row.state_reason != expected_reason
             or row.prerequisite_code != rule.get("prerequisite_code")
         ):
             raise ValueError("accounting row does not match its registered branch")
@@ -1037,12 +1045,14 @@ def _accounting_document(execution: _Execution) -> dict[str, object]:
     """Return the validated bounded accounting projection used by the JSON report."""
     document = execution._accounting_document()
     rows = execution.rows
-    levels = tuple(dict.fromkeys(row.attempted_level for row in rows))
+    levels = tuple(execution.compatibility_results)
+    tally_levels = tuple(level for level, _failures, _unverified in execution.report_tallies)
     expected = tuple((level, key) for level in levels for key, _owner in _PILOT_OWNERS)
     observed = tuple((row.attempted_level, row.obligation_key) for row in rows)
     if (
         set(document) != {"registry", "accounting_complete", "rows"}
         or document["accounting_complete"] is not True
+        or levels != tally_levels
         or levels not in ((0,), (0, 1), (0, 1, 2))
         or observed != expected
     ):

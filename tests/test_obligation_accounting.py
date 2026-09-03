@@ -435,6 +435,53 @@ def test_accounted_emission_binds_rows_to_the_exact_pilot_registry(
         )
 
 
+def test_accounted_emission_cannot_drop_every_row_for_an_attempted_level(
+    valid_level0: dict[str, Any],
+) -> None:
+    execution = _execute(valid_level0, (0, 1))
+    payload = json.loads(execution._payload)
+    payload["accounting"]["rows"] = [
+        row for row in payload["accounting"]["rows"] if row["attempted_level"] != 1
+    ]
+    forged = accounting._Execution(accounting._canonical_json(payload))
+
+    with pytest.raises(ValueError, match="incomplete obligation accounting"):
+        report._build_from_execution(
+            record=valid_level0,
+            record_path="record.json",
+            execution=forged,
+            suite_version="0.5.1",
+            library_version=None,
+            generated_at="2026-08-31 12:00 UTC",
+        )
+
+
+def test_accounted_emission_binds_state_reason_to_the_registered_branch(
+    valid_level0: dict[str, Any],
+) -> None:
+    execution = _execute(valid_level0, (0,))
+    payload = json.loads(execution._payload)
+    sca = next(
+        row
+        for row in payload["accounting"]["rows"]
+        if row["suite_obligation_key"] == "TR-SCA-002"
+    )
+    sca["state_reason"] = "totally false reason"
+    forged = accounting._Execution(accounting._canonical_json(payload))
+
+    with pytest.raises(
+        ValueError, match="accounting row does not match its registered branch"
+    ):
+        report._build_from_execution(
+            record=valid_level0,
+            record_path="record.json",
+            execution=forged,
+            suite_version="0.5.1",
+            library_version=None,
+            generated_at="2026-08-31 12:00 UTC",
+        )
+
+
 @pytest.mark.parametrize(
     ("attack", "error"),
     [

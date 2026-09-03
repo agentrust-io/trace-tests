@@ -72,8 +72,10 @@ The operational `TR-POL-003` rule is identified separately from schema fragments
 that support its field shape. Every source locator carries a digest of the exact
 resolved value so a reader holding the pinned trace-spec bytes can re-resolve and
 compare it. Accounted JSON, HTML, badge, and verdict projections consume one
-immutable execution-derived snapshot; each requested renderer runs independently,
-and the existing contribution policy continues to determine the report verdict.
+immutable execution-derived snapshot. A JSON-only request does not pre-render
+unrequested formats; when multiple formats are requested, they are emitted in the
+CLI's existing order. The existing contribution policy continues to determine the
+report verdict.
 The tag identifies this emitted object shape; the repository does not currently
 ship a separate formal JSON Schema for it.
 
