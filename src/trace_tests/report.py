@@ -22,9 +22,10 @@ from __future__ import annotations
 import hashlib
 import html
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
+from trace_tests import accounting
 from trace_tests.modules.unverified import finding_counts_as_level_failure
 from trace_tests.result import Finding, Status
 
@@ -43,6 +44,8 @@ LEVEL_NAMES = {
     1: "TEE-attested",
     2: "Transparency-anchored",
 }
+
+ACCOUNTING_REPORT_SCHEMA = "agentrust-io/trace-tests/obligation-accounting/1"
 
 #: Modules introduced at each level, for the per-level breakdown.
 LEVEL_MODULES = {
@@ -78,8 +81,9 @@ class LevelOutcome:
 class ReportData:
     """Everything the renderers need. Deliberately a plain structure.
 
-    Assembled once so the HTML and the JSON cannot disagree about the verdict,
-    which is the obvious way for a report format to go wrong.
+    ``build`` preserves the legacy mutable projections. The private accounted
+    builder seals one semantic snapshot at the CLI boundary, so later mutation
+    cannot make JSON, HTML, badge, highest level, and verdict disagree.
     """
 
     record_path: str
@@ -91,15 +95,21 @@ class ReportData:
     levels: list[LevelOutcome]
     findings: dict[int, dict[str, list[Finding]]]
     transparency: str | None
+    _obligation_accounting_json: bytes | None = None
+    _accounted_snapshot: bytes | None = None
 
     @property
     def highest_level(self) -> int | None:
         """Highest level that passed, or ``None`` when the record fails Level 0."""
+        if self._accounted_snapshot is not None:
+            return _snapshot_view(self).highest_level
         passed = [lv.level for lv in self.levels if lv.attempted and lv.passed]
         return max(passed) if passed else None
 
     @property
     def verdict(self) -> str:
+        if self._accounted_snapshot is not None:
+            return _snapshot_view(self).verdict
         top = self.highest_level
         if top is None:
             return "FAIL at Level 0"
@@ -119,6 +129,31 @@ def _tally(results: dict[str, list[Finding]], level: int) -> tuple[int, int]:
     # required the check would be worse than no report. Per-code rather than
     # blanket; an unregistered code fails from level 1, as the blanket rule did.
     return failures, len(unverified_findings)
+
+
+def _assemble(
+    *,
+    record: dict[str, Any],
+    record_path: str,
+    record_format: str,
+    results_by_level: dict[int, dict[str, list[Finding]]],
+    levels: list[LevelOutcome],
+    suite_version: str,
+    library_version: str | None,
+    generated_at: str,
+) -> ReportData:
+    trace = record.get("trace", record)
+    return ReportData(
+        record_path=record_path,
+        record_format=record_format,
+        digest=record_digest(record),
+        suite_version=suite_version,
+        library_version=library_version,
+        generated_at=generated_at,
+        levels=levels,
+        findings=results_by_level,
+        transparency=trace.get("transparency"),
+    )
 
 
 def build(
@@ -143,68 +178,207 @@ def build(
                 unverified=unverified,
             )
         )
-    trace = record.get("trace", record)
-    return ReportData(
+    return _assemble(
+        record=record,
         record_path=record_path,
         record_format=record_format,
-        digest=record_digest(record),
+        results_by_level=results_by_level,
+        levels=levels,
         suite_version=suite_version,
         library_version=library_version,
         generated_at=generated_at,
-        levels=levels,
-        findings=results_by_level,
-        transparency=trace.get("transparency"),
     )
+
+
+def _freeze_semantics(data: ReportData) -> bytes:
+    return json.dumps(
+        {
+            "record_path": data.record_path,
+            "record_format": data.record_format,
+            "digest": data.digest,
+            "suite_version": data.suite_version,
+            "library_version": data.library_version,
+            "generated_at": data.generated_at,
+            "levels": [
+                [level.level, level.attempted, level.passed, level.failures, level.unverified]
+                for level in data.levels
+            ],
+            "findings": [
+                [
+                    level,
+                    [
+                        [
+                            module,
+                            [
+                                [finding.code, finding.status.value, finding.message]
+                                for finding in findings
+                            ],
+                        ]
+                        for module, findings in results.items()
+                    ],
+                ]
+                for level, results in sorted(data.findings.items())
+            ],
+            "transparency": data.transparency,
+            "obligation_accounting": (
+                json.loads(data._obligation_accounting_json)
+                if data._obligation_accounting_json is not None
+                else None
+            ),
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+        allow_nan=True,
+    ).encode("ascii")
+
+
+def _snapshot_view(data: ReportData) -> ReportData:
+    if data._accounted_snapshot is None:
+        return data
+    value = json.loads(data._accounted_snapshot)
+    obligation_accounting = value["obligation_accounting"]
+    return ReportData(
+        record_path=value["record_path"],
+        record_format=value["record_format"],
+        digest=value["digest"],
+        suite_version=value["suite_version"],
+        library_version=value["library_version"],
+        generated_at=value["generated_at"],
+        levels=[LevelOutcome(*level) for level in value["levels"]],
+        findings={
+            level: {
+                module: [
+                    Finding(code, Status(status), message) for code, status, message in findings
+                ]
+                for module, findings in modules
+            }
+            for level, modules in value["findings"]
+        },
+        transparency=value["transparency"],
+        _obligation_accounting_json=(
+            json.dumps(
+                obligation_accounting,
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=True,
+            ).encode("ascii")
+            if obligation_accounting is not None
+            else None
+        ),
+    )
+
+
+def _build_from_execution(
+    *,
+    record: dict[str, Any],
+    record_path: str,
+    execution: accounting._Execution,
+    suite_version: str,
+    library_version: str | None,
+    generated_at: str,
+) -> ReportData:
+    """Build a report whose findings and accounting share one execution."""
+    record_bytes = json.dumps(
+        record, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=True
+    ).encode("ascii")
+    if record_bytes != execution.record_bytes:
+        raise ValueError("report record does not match its accounting execution")
+    document = accounting._accounting_document(execution)
+    registry = document["registry"]
+    if not isinstance(registry, dict):
+        raise ValueError("report execution carries no obligation registry")
+    extension = {
+        "schema": ACCOUNTING_REPORT_SCHEMA,
+        "registry_id": registry["id"],
+        "registry_sha256": registry["sha256"],
+        **document,
+    }
+    results = execution.compatibility_results
+    tallies = execution.report_tallies
+    if tuple(level for level, _failures, _unverified in tallies) != tuple(results):
+        raise ValueError("report tallies do not match the accounting execution")
+    levels = [
+        LevelOutcome(
+            level=level,
+            attempted=True,
+            passed=failures == 0,
+            failures=failures,
+            unverified=unverified,
+        )
+        for level, failures, unverified in tallies
+    ]
+    built = _assemble(
+        record=record,
+        record_path=record_path,
+        record_format=execution.record_format,
+        results_by_level=results,
+        levels=levels,
+        suite_version=suite_version,
+        library_version=library_version,
+        generated_at=generated_at,
+    )
+    accounted = replace(
+        built,
+        _obligation_accounting_json=json.dumps(
+            extension, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+        ).encode("ascii"),
+    )
+    return replace(accounted, _accounted_snapshot=_freeze_semantics(accounted))
 
 
 def to_json(data: ReportData) -> str:
     """Machine-readable form, for CI gates and dashboards."""
-    return json.dumps(
-        {
-            "schema": "agentrust-io/trace-tests/report/1",
-            "record": {
-                "path": data.record_path,
-                "format": data.record_format,
-                "digest": data.digest,
-                "transparency": data.transparency,
-            },
-            "tooling": {
-                "suite": data.suite_version,
-                "library": data.library_version,
-            },
-            "generated_at": data.generated_at,
-            "verdict": data.verdict,
-            "highest_level_passed": data.highest_level,
-            "levels": [
-                {
-                    "level": lv.level,
-                    "name": LEVEL_NAMES[lv.level],
-                    "passed": lv.passed,
-                    "failures": lv.failures,
-                    "unverified": lv.unverified,
-                }
-                for lv in data.levels
-            ],
-            "findings": [
-                {
-                    "level": level,
-                    "module": module,
-                    "code": f.code,
-                    "status": str(f.status),
-                    "message": f.message,
-                }
-                for level, results in sorted(data.findings.items())
-                for module, fs in results.items()
-                for f in fs
-            ],
-            # Stated in the artifact, not only in the docs.
-            "disclaimer": (
-                "This report is a rendering of one run of one suite version. It is "
-                "not signed and carries no authority of its own. The evidence is the "
-                "Trust Record identified by the digest above; re-run the suite to "
-                "check this report rather than trusting it."
-            ),
+    data = _snapshot_view(data)
+    document = {
+        "schema": "agentrust-io/trace-tests/report/1",
+        "record": {
+            "path": data.record_path,
+            "format": data.record_format,
+            "digest": data.digest,
+            "transparency": data.transparency,
         },
+        "tooling": {
+            "suite": data.suite_version,
+            "library": data.library_version,
+        },
+        "generated_at": data.generated_at,
+        "verdict": data.verdict,
+        "highest_level_passed": data.highest_level,
+        "levels": [
+            {
+                "level": lv.level,
+                "name": LEVEL_NAMES[lv.level],
+                "passed": lv.passed,
+                "failures": lv.failures,
+                "unverified": lv.unverified,
+            }
+            for lv in data.levels
+        ],
+        "findings": [
+            {
+                "level": level,
+                "module": module,
+                "code": f.code,
+                "status": str(f.status),
+                "message": f.message,
+            }
+            for level, results in sorted(data.findings.items())
+            for module, fs in results.items()
+            for f in fs
+        ],
+        # Stated in the artifact, not only in the docs.
+        "disclaimer": (
+            "This report is a rendering of one run of one suite version. It is "
+            "not signed and carries no authority of its own. The evidence is the "
+            "Trust Record identified by the digest above; re-run the suite to "
+            "check this report rather than trusting it."
+        ),
+    }
+    if data._obligation_accounting_json is not None:
+        document["obligation_accounting"] = json.loads(data._obligation_accounting_json)
+    return json.dumps(
+        document,
         indent=2,
         sort_keys=False,
     )
@@ -225,6 +399,7 @@ def badge_svg(data: ReportData) -> str:
     someone else's infrastructure adds a dependency to an artifact whose point is
     that it needs none.
     """
+    data = _snapshot_view(data)
     top = data.highest_level
     right = "fails Level 0" if top is None else f"Level {top}"
     colour = _BADGE_COLOURS[top]
@@ -284,6 +459,7 @@ overflow-x:auto;font-size:.82rem}
 
 def to_html(data: ReportData) -> str:
     """Self-contained HTML. No external CSS, no fonts, no scripts, no network."""
+    data = _snapshot_view(data)
     e = html.escape
     top = data.highest_level
 
