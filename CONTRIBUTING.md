@@ -9,6 +9,14 @@ Thank you for your interest in contributing to the TRACE test suite.
 3. Commit using [Conventional Commits](https://www.conventionalcommits.org)
 4. Open a pull request against `main`
 
+## Using AI to contribute
+
+Use agents. A lot of this was built with them and saying otherwise would be dishonest.
+
+The rule is that you have to understand what you submit. If you cannot explain what your change does and how it interacts with the rest of the system, with the agent closed, do not open the pull request. Reviewing a change nobody can explain costs more than writing it did, and it becomes someone else's problem the moment it merges.
+
+That is a rule about understanding, not about tooling.
+
 ## Reporting Security Issues
 
 Use [GitHub Security Advisories](https://github.com/agentrust-io/trace-tests/security/advisories/new) rather than public issues.
