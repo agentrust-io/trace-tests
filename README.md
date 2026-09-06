@@ -21,15 +21,15 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![TRACE Spec](https://img.shields.io/badge/TRACE-Spec_v0.2-0ea5e9)](https://github.com/agentrust-io/trace-spec)
-[![Tests](https://img.shields.io/badge/Conformance_Tests-7_modules-green)]()
+[![Tests](https://img.shields.io/badge/Conformance_Tests-8_modules-green)](docs/modules.md)
 [![CI](https://github.com/agentrust-io/trace-tests/actions/workflows/ci.yml/badge.svg)](https://github.com/agentrust-io/trace-tests/actions/workflows/ci.yml)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white&style=flat)](https://discord.gg/grgzFEHgkj)
 
 > **Test suite v0.2.** Tracks [TRACE Spec v0.2](https://github.com/agentrust-io/trace-spec).
 
-Conformance tests for TRACE (Trust Runtime Attestation and Compliance Evidence). Run this suite against your implementation to verify it meets the spec before claiming TRACE compliance.
+Check a TRACE record, inspect the findings, and produce a reproducible conformance report. The suite checks the record and supplied evidence; a passing report does not establish that an entire implementation meets every specification requirement.
 
-Seven test modules covering the full specification: envelope structure, signature algorithms, TEE runtime claims, policy binding, tool-call transcripts, SCITT transparency anchoring, and supply chain provenance.
+Eight modules cover envelope, signature, runtime, policy, appraisal, transcript, transparency, and provenance checks. Read the [limitations](LIMITATIONS.md) to interpret their results.
 
 ## Quick start
 
