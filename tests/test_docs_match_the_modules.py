@@ -20,6 +20,7 @@ from typing import Any
 import jsonschema
 
 from trace_tests.modules.unverified import UNVERIFIED_FAILS_FROM_LEVEL
+from trace_tests.runner import _LEVEL_MODULES
 
 REPO = pathlib.Path(__file__).resolve().parents[1]
 MODULES = REPO / "src" / "trace_tests" / "modules"
@@ -33,6 +34,26 @@ _DOCUMENTED_ROW = re.compile(r"^\| (TR-[A-Z]{3}-\d{3}) ", re.M)
 _JSON_BLOCK = re.compile(r"```json\n(.*?)```", re.S)
 #: A row of the unverified-level table in docs/levels.md: code, then a level.
 _UNVERIFIED_ROW = re.compile(r"^\| (TR-[A-Z]{3}-\d{3}) \| (\d+) \|", re.M)
+
+
+def test_published_module_counts_match_the_runner() -> None:
+    """Keep total counts on reader entry pages aligned with the active modules."""
+    expected = len(set().union(*_LEVEL_MODULES.values()))
+    words = ["zero", "one", "two", "three", "four", "five", "six",
+             "seven", "eight", "nine", "ten", "eleven", "twelve"]
+    pattern = re.compile(r"\b(" + "|".join(words) + r"|\d+) (?:test )?modules\b", re.I)
+    for relative in ("README.md", "index.md", "docs/modules.md",
+                     "docs/tutorials/writing-conformance-tests.md"):
+        text = (REPO / relative).read_text(encoding="utf-8")
+        counts = pattern.findall(text)
+        assert counts, f"No published total found in {relative}"
+        for count in counts:
+            actual = int(count) if count.isdigit() else words.index(count.lower())
+            assert actual == expected, f"{relative}: says {count} modules; runner has {expected}"
+    readme = (REPO / "README.md").read_text(encoding="utf-8")
+    badge = re.search(r"Conformance_Tests-(\d+)_modules-", readme)
+    assert badge is not None
+    assert int(badge.group(1)) == expected
 
 
 def _codes(text: str) -> set[str]:

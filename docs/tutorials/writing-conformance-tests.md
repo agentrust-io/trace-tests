@@ -242,6 +242,6 @@ When a finding carries `status == Status.UNVERIFIED`, the record has no signatur
 
 ## Summary
 
-You ran the existing suite with pytest, called individual module `check()` functions directly, and built a signed test fixture from scratch. The `Finding` dataclass with `code`, `status`, and `message` fields is the single interface across all seven modules.
+You ran the existing suite with pytest, called individual module `check()` functions directly, and built a signed test fixture from scratch. The `Finding` dataclass with `code`, `status`, and `message` fields is the single interface across all eight modules.
 
 Next steps: [CI Integration](./ci-integration.md) shows how to run these tests in GitHub Actions with matrix Python versions and artifact upload.

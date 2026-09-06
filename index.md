@@ -54,7 +54,7 @@ A conformance report that looks authoritative and cannot be checked is the same 
 
     ---
 
-    The seven test modules, the `TR-*` error codes they emit, and what each one checks.
+    The eight test modules, the `TR-*` error codes they emit, and what each one checks.
 
     [Test Modules](docs/modules.md)
 
