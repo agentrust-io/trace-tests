@@ -81,6 +81,7 @@ plugins:
           - docs/modules/tr-sig.md
           - docs/modules/tr-rte.md
           - docs/modules/tr-pol.md
+          - docs/modules/tr-apr.md
           - docs/modules/tr-txn.md
           - docs/modules/tr-anc.md
           - docs/modules/tr-sca.md
@@ -163,6 +164,7 @@ nav:
       - Signature (TR-SIG): docs/modules/tr-sig.md
       - Runtime (TR-RTE): docs/modules/tr-rte.md
       - Policy (TR-POL): docs/modules/tr-pol.md
+      - Appraisal (TR-APR): docs/modules/tr-apr.md
       - Transcript (TR-TXN): docs/modules/tr-txn.md
       - Transparency (TR-ANC): docs/modules/tr-anc.md
       - Provenance (TR-SCA): docs/modules/tr-sca.md

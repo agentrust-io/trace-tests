@@ -5,9 +5,9 @@ description: Run this suite against your implementation to find out which TRACE 
 
 # TRACE Test Suite
 
-Conformance tests for [TRACE](https://trace.agentrust-io.com) (Trust, Runtime Attestation, and Compliance Evidence). Run this suite against your implementation to verify it meets the specification before claiming TRACE compliance.
+Check a TRACE record, inspect the findings, and produce a reproducible conformance report. The suite checks the record and supplied evidence; a passing report does not establish that an entire implementation meets every requirement of the [TRACE specification](https://trace.agentrust-io.com).
 
-**Seven modules cover the full specification: envelope structure, signature algorithms, TEE runtime claims, policy binding, tool-call transcripts, SCITT transparency anchoring, and supply-chain provenance.**
+The [eight modules](docs/modules.md) cover envelope, signature, runtime, policy, appraisal, transcript, transparency, and provenance checks. Read the [limitations](LIMITATIONS.md) to interpret what each result establishes.
 
 !!! tip "TL;DR"
     - `verify` answers a question for the person running it. `report` produces an artifact for somebody who was not there.
