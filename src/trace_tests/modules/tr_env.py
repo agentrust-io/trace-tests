@@ -9,6 +9,10 @@ from typing import Any
 from trace_tests.result import Finding, Status
 
 _PROFILE = "tag:agentrust-io.com,2026:trace-v0.2"
+# RFC 7517/7518 private key members. Mirrors _JWK_PRIVATE_PARAMS in the
+# agentrust-trace reference model, which already refuses these.
+_JWK_PRIVATE_PARAMS = frozenset({"d", "p", "q", "dp", "dq", "qi", "k"})
+
 _SUBJECT_RE = re.compile(r'^(spiffe://[^/]+/.+|did:[a-z0-9]+:.+)$')
 _IAT_MIN = 1_700_000_000
 
@@ -57,5 +61,25 @@ def check(trace: dict[str, Any], max_age_seconds: int = DEFAULT_MAX_AGE_SECONDS)
         findings.append(Finding("TR-ENV-004", Status.PASS, f"cnf.jwk.kty present ({cnf['jwk']['kty']!r})"))
     else:
         findings.append(Finding("TR-ENV-004", Status.FAIL, "cnf must contain jwk with kty"))
+
+    # TR-ENV-005 (GHSA-vc4p-h84j-7qxj). RFC 8747 makes cnf a confirmation key:
+    # the public half, so a verifier can bind the record to the key that signed
+    # it. A private member here publishes the signing key inside a record that
+    # is signed, self-authenticating and usually anchored, and the only remedy
+    # afterwards is to revoke the identity. TR-ENV-004 checks kty is present,
+    # so a record carrying `d` passed the whole suite.
+    if isinstance(cnf, dict) and isinstance(cnf.get("jwk"), dict):
+        private = sorted(_JWK_PRIVATE_PARAMS.intersection(cnf["jwk"]))
+        if private:
+            findings.append(Finding(
+                "TR-ENV-005", Status.FAIL,
+                "cnf.jwk carries private key material: "
+                + ", ".join(private)
+                + ". Publish the public half only; this key must be treated as compromised",
+            ))
+        else:
+            findings.append(Finding(
+                "TR-ENV-005", Status.PASS, "cnf.jwk carries no private key material"
+            ))
 
     return findings

@@ -10,6 +10,7 @@ All TRACE test failures emit a structured error code of the form `TR-<MODULE>-<N
 | TR-ENV-002 | `iat` is missing, not an integer, or out of range | Set `iat` to a Unix timestamp integer (e.g. `int(time.time())`) |
 | TR-ENV-003 | `subject` does not match SPIFFE URI or DID pattern | Use `spiffe://<trust-domain>/<path>` or a `did:` URI |
 | TR-ENV-004 | `cnf` is absent or not an object, `cnf.jwk` is absent or not an object, or `cnf.jwk.kty` is absent | Populate `cnf.jwk` with at least `kty`. This checks that one field, not the schema's full required set, which structural validation covers |
+| TR-ENV-005 | `cnf.jwk` carries private key material (`d`, `p`, `q`, `dp`, `dq`, `qi`, `k`) | Publish the public half only. RFC 8747 makes `cnf` a confirmation key, and a record is signed and usually anchored, so a key exposed this way must be treated as compromised and the identity revoked |
 
 ## TR-SIG — Signature
 
