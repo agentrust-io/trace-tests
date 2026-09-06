@@ -65,3 +65,39 @@ A report is produced by whoever ran the suite, on evidence they supplied. There 
 assessor and no certification programme behind it. This is why the generated report tells a reader
 who does not trust the sender to go and check the record themselves rather than trusting the
 summary.
+
+## Bounded obligation accounting
+
+**`accounting_complete` describes the pilot, not all of TRACE.**
+The accounting extension covers only `TR-APR-001`, `TR-POL-003`, and `TR-SCA-002`.
+Complete means that every attempted level has exactly one reconciled row for each of those three
+obligations. It does not mean every TRACE obligation was accounted for, every obligation was
+evaluated, or that the report independently proves which code ran or which fields it accessed.
+An obligation absent from both the bounded registry and its rows is outside this completeness
+claim and cannot be discovered by registry-to-row reconciliation alone.
+
+The pilot records `TR-SCA-002` at Level 0 as applicable but not attempted: the pinned schema
+requires `build_provenance.digest`, while the scheduler first runs `TR-SCA` at Level 1. The row
+carries that scheduler reason rather than silently presenting the state without an explanation.
+
+Each source locator includes a digest of the exact value resolved at its pinned trace-spec
+revision. JSON sources use RFC 6901 pointers and RFC 8785-canonical value bytes. The operational
+TR-POL-003 rule uses the unique exact text of verification item 5 in the pinned specification;
+its schema fragments are listed separately as structural support. A reader who holds those
+pinned bytes can resolve and compare the values. The suite does not fetch or authenticate
+trace-spec at report time, and a matching value does not prove that a locator is sufficient or
+that its checker is correct.
+
+Findings and accounting share one validated execution snapshot during supported report
+construction. The emitted report remains editable and unsigned. Its registry hash identifies
+registry content; it does not authenticate the rows, the report, or its producer.
+
+The optional policy resolver is trusted in-process Python code supplied by the caller. The
+accounted path isolates nested public runs and freezes ordinary decision inputs, but it is not a
+sandbox against a callback that rewrites interpreter globals, functions, classes, or source files.
+
+`producer_branch` is a checker-owned same-execution diagnostic. Some branches with the same
+accounting meaning return indistinguishable findings, so the emitted report alone cannot
+independently reconstruct every branch label. Applicability, evaluation state, prerequisite,
+contribution, findings, and report tallies are revalidated at emission; the label is not
+presented as independent proof of checker control flow.

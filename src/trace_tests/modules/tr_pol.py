@@ -8,6 +8,15 @@ from collections.abc import Callable
 from typing import Any
 from urllib.parse import urlsplit
 
+from trace_tests.accounting import (
+    BranchRule,
+    ObligationSpec,
+    ProducerRole,
+    _checker_binding,
+    _normative_text_sources,
+    _observe,
+    _structural_sources,
+)
 from trace_tests.result import Finding, Status
 
 _DIGEST_RE = re.compile(r"^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})$")
@@ -20,6 +29,77 @@ _SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.\-]*$")
 #: Mirrors `policy.enforcement_mode` in the packaged schema; `test_enum_parity` fails if
 #: it drifts from that copy.
 _VALID_ENFORCEMENT = frozenset({"enforce", "advisory", "silent", "declared"})
+
+_ACCOUNTING_SPEC = ObligationSpec(
+    "TR-POL-003",
+    "TR-POL",
+    _normative_text_sources(
+        "5. Policy hash matches the policy bundle the verifier expects.",
+    ),
+    _checker_binding("TR-POL"),
+    (
+        BranchRule(
+            "policy_missing",
+            ProducerRole.PREREQUISITE,
+            prerequisite_code="TR-POL-001",
+            prerequisite_statuses=(Status.FAIL,),
+            prerequisite_message_prefix="TR-POL-001: policy field is missing",
+        ),
+        BranchRule(
+            "policy_not_object",
+            ProducerRole.PREREQUISITE,
+            prerequisite_code="TR-POL-001",
+            prerequisite_statuses=(Status.FAIL,),
+            prerequisite_message_prefix="TR-POL-001: policy field is missing",
+        ),
+        BranchRule("policy_uri_absent", ProducerRole.NOT_APPLICABLE, "TR-POL-003", (Status.SKIP,)),
+        BranchRule(
+            "policy_uri_explicit_null",
+            ProducerRole.NOT_APPLICABLE,
+            "TR-POL-003",
+            (Status.SKIP,),
+        ),
+        BranchRule(
+            "policy_uri_non_string", ProducerRole.TARGET_COMPLETED, "TR-POL-003", (Status.FAIL,)
+        ),
+        BranchRule(
+            "policy_uri_malformed", ProducerRole.TARGET_COMPLETED, "TR-POL-003", (Status.FAIL,)
+        ),
+        BranchRule(
+            "bundle_hash_malformed",
+            ProducerRole.PREREQUISITE,
+            "TR-POL-003",
+            (Status.SKIP,),
+            "TR-POL-001",
+            (Status.FAIL,),
+            "TR-POL-001: policy.bundle_hash must match ",
+        ),
+        BranchRule("no_resolver", ProducerRole.NOT_ATTEMPTED, "TR-POL-003", (Status.SKIP,)),
+        BranchRule(
+            "resolver_exception",
+            ProducerRole.TARGET_ATTEMPTED_UNRESOLVED,
+            "TR-POL-003",
+            (Status.UNVERIFIED,),
+        ),
+        BranchRule(
+            "resolver_non_bytes",
+            ProducerRole.TARGET_ATTEMPTED_UNRESOLVED,
+            "TR-POL-003",
+            (Status.UNVERIFIED,),
+        ),
+        BranchRule("resolved_match", ProducerRole.TARGET_COMPLETED, "TR-POL-003", (Status.PASS,)),
+        BranchRule(
+            "resolved_mismatch", ProducerRole.TARGET_COMPLETED, "TR-POL-003", (Status.FAIL,)
+        ),
+    ),
+    _structural_sources(
+        "/required/5",
+        "/properties/policy/type",
+        "/properties/policy/required",
+        "/properties/policy/properties/bundle_hash/pattern",
+        "/properties/policy/properties/policy_uri",
+    ),
+)
 
 
 def _not_absolute_uri(policy_uri: str) -> str | None:
@@ -58,37 +138,66 @@ def _resolution_finding(
     runs before the resolver is consulted: running an offline verification must
     not mean being blind to a defect the record carries on its face.
     """
+    if "policy_uri" not in policy:
+        return _observe(
+            "TR-POL",
+            "policy_uri_absent",
+            Finding(
+                "TR-POL-003", Status.SKIP,
+                "policy.policy_uri not present (optional); no bundle to resolve",
+            ),
+        )
     policy_uri = policy.get("policy_uri")
     if policy_uri is None:
-        return Finding(
-            "TR-POL-003", Status.SKIP,
-            "policy.policy_uri not present (optional); no bundle to resolve",
+        return _observe(
+            "TR-POL",
+            "policy_uri_explicit_null",
+            Finding(
+                "TR-POL-003", Status.SKIP,
+                "policy.policy_uri not present (optional); no bundle to resolve",
+            ),
         )
     if not isinstance(policy_uri, str):
-        return Finding(
-            "TR-POL-003", Status.FAIL,
-            f"TR-POL-003: policy.policy_uri must be a string, got {type(policy_uri).__name__}",
+        return _observe(
+            "TR-POL",
+            "policy_uri_non_string",
+            Finding(
+                "TR-POL-003", Status.FAIL,
+                f"TR-POL-003: policy.policy_uri must be a string, got {type(policy_uri).__name__}",
+            ),
         )
 
     malformed = _not_absolute_uri(policy_uri)
     if malformed is not None:
-        return Finding(
-            "TR-POL-003", Status.FAIL,
-            f"TR-POL-003: policy.policy_uri {malformed}: {policy_uri!r}",
+        return _observe(
+            "TR-POL",
+            "policy_uri_malformed",
+            Finding(
+                "TR-POL-003", Status.FAIL,
+                f"TR-POL-003: policy.policy_uri {malformed}: {policy_uri!r}",
+            ),
         )
 
     bundle_hash = str(policy.get("bundle_hash", ""))
     if not _DIGEST_RE.match(bundle_hash):
-        return Finding(
-            "TR-POL-003", Status.SKIP,
-            "policy.bundle_hash is not a well-formed digest, so there is nothing to "
-            "compare the resolved bundle against; reported by TR-POL-001",
+        return _observe(
+            "TR-POL",
+            "bundle_hash_malformed",
+            Finding(
+                "TR-POL-003", Status.SKIP,
+                "policy.bundle_hash is not a well-formed digest, so there is nothing to "
+                "compare the resolved bundle against; reported by TR-POL-001",
+            ),
         )
 
     if policy_resolver is None:
-        return Finding(
-            "TR-POL-003", Status.SKIP,
-            "policy.policy_uri not resolved; no resolver supplied",
+        return _observe(
+            "TR-POL",
+            "no_resolver",
+            Finding(
+                "TR-POL-003", Status.SKIP,
+                "policy.policy_uri not resolved; no resolver supplied",
+            ),
         )
 
     try:
@@ -98,34 +207,50 @@ def _resolution_finding(
         # the bundle could not be read, which is the same word for a withdrawn
         # referent and a mistyped path; without the reason the second is
         # indistinguishable from weather.
-        return Finding(
-            "TR-POL-003", Status.UNVERIFIED,
-            f"TR-POL-003: policy.policy_uri could not be resolved, so "
-            f"policy.bundle_hash was not checked against it: {policy_uri!r} "
-            f"({type(exc).__name__}: {exc})",
+        return _observe(
+            "TR-POL",
+            "resolver_exception",
+            Finding(
+                "TR-POL-003", Status.UNVERIFIED,
+                f"TR-POL-003: policy.policy_uri could not be resolved, so "
+                f"policy.bundle_hash was not checked against it: {policy_uri!r} "
+                f"({type(exc).__name__}: {exc})",
+            ),
         )
 
     if not isinstance(resolved, bytes):
-        return Finding(
-            "TR-POL-003", Status.UNVERIFIED,
-            "TR-POL-003: the policy resolver violated its contract by returning "
-            f"{type(resolved).__name__} rather than bytes, so policy.bundle_hash "
-            f"was not checked against policy.policy_uri {policy_uri!r}",
+        return _observe(
+            "TR-POL",
+            "resolver_non_bytes",
+            Finding(
+                "TR-POL-003", Status.UNVERIFIED,
+                "TR-POL-003: the policy resolver violated its contract by returning "
+                f"{type(resolved).__name__} rather than bytes, so policy.bundle_hash "
+                f"was not checked against policy.policy_uri {policy_uri!r}",
+            ),
         )
 
     prefix, _, _ = bundle_hash.partition(":")
     algo = _DIGEST_ALGOS[f"{prefix}:"]
     actual = f"{prefix}:{algo(resolved).hexdigest().lower()}"
     if actual == bundle_hash.lower():
-        return Finding(
-            "TR-POL-003", Status.PASS,
-            f"policy.policy_uri resolves to the bundle policy.bundle_hash declares "
-            f"({len(resolved)} bytes, {prefix})",
+        return _observe(
+            "TR-POL",
+            "resolved_match",
+            Finding(
+                "TR-POL-003", Status.PASS,
+                f"policy.policy_uri resolves to the bundle policy.bundle_hash declares "
+                f"({len(resolved)} bytes, {prefix})",
+            ),
         )
-    return Finding(
-        "TR-POL-003", Status.FAIL,
-        f"TR-POL-003: policy.bundle_hash does not describe what policy.policy_uri "
-        f"resolves to; declared {bundle_hash}, resolved {actual}",
+    return _observe(
+        "TR-POL",
+        "resolved_mismatch",
+        Finding(
+            "TR-POL-003", Status.FAIL,
+            f"TR-POL-003: policy.bundle_hash does not describe what policy.policy_uri "
+            f"resolves to; declared {bundle_hash}, resolved {actual}",
+        ),
     )
 
 
@@ -142,8 +267,17 @@ def check(
     findings: list[Finding] = []
     policy = trace.get("policy")
 
-    if not isinstance(policy, dict):
+    if policy is None:
+        _observe("TR-POL", "policy_missing")
         return [Finding("TR-POL-001", Status.FAIL, "TR-POL-001: policy field is missing or not an object")]
+    if not isinstance(policy, dict):
+        _observe("TR-POL", "policy_not_object")
+        return [
+            Finding(
+                "TR-POL-001", Status.FAIL,
+                "TR-POL-001: policy field is missing or not an object",
+            )
+        ]
 
     bundle_hash = policy.get("bundle_hash", "")
     if _DIGEST_RE.match(str(bundle_hash)):

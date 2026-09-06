@@ -22,6 +22,8 @@ registration guard turns red rather than the run turning quietly permissive.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from trace_tests.result import Finding
 
 #: Lowest conformance level at which an unverified finding under this code
@@ -42,10 +44,22 @@ def unverified_fails(code: str, level: int) -> bool:
     return level >= UNVERIFIED_FAILS_FROM_LEVEL.get(code, DEFAULT_FAILS_FROM_LEVEL)
 
 
-def finding_counts_as_level_failure(finding: Finding, level: int) -> bool:
+def finding_counts_as_level_failure(
+    finding: Finding,
+    level: int,
+) -> bool:
     """Return whether one finding contributes failure at one level."""
+    return _finding_counts_as_level_failure(finding, level, unverified_fails)
+
+
+def _finding_counts_as_level_failure(
+    finding: Finding,
+    level: int,
+    unverified_rule: Callable[[str, int], bool],
+) -> bool:
+    """Private policy primitive used with either the live or a frozen threshold rule."""
     if finding.failed():
         return True
     if finding.unverified():
-        return unverified_fails(finding.code, level)
+        return unverified_rule(finding.code, level)
     return False
