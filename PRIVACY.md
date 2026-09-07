@@ -1,9 +1,9 @@
 # Privacy
 
-agentrust-trace-tests (the TRACE conformance suite) collects and transmits no personal data.
+The TRACE test suite reads the record and optional evidence you supply. CLI options can also load policy bundles, receipts, and related local files. Findings and exported reports may reproduce identifiers, artifact locations, and error details from those inputs; review reports before sharing them.
 
-It runs locally as a command-line tool. It processes only the inputs you give it, entirely on your machine, and sends no telemetry, analytics, or usage data to the TRACE Tests project or any third party. There is no account, login, or tracking, and no cookies or background network calls.
+The CLI does not send project telemetry or analytics and does not fetch arbitrary record URLs. Its policy-directory resolver uses local files. Library callers can supply their own resolver callbacks, whose network and data handling behavior belongs to the calling application.
 
-It reads only the record file you pass on the command line and makes no outbound calls.
+Uninstalling the package does not delete input records, evidence files, exported reports, badges, logs, or backups. Manage those artifacts through your application's retention and deletion procedures.
 
-Uninstalling removes it completely. Questions or corrections: https://github.com/agentrust-io/trace-tests/issues
+[Report a correction](https://github.com/agentrust-io/trace-tests/issues).

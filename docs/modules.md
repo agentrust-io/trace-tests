@@ -6,7 +6,7 @@ The TRACE conformance suite is divided into eight modules. Each module maps to a
 |--------|-----------|--------------|---------------|
 | [Envelope](modules/tr-env.md) | TR-ENV | §3.2 | `eat_profile` URI, `iat` validity, `subject` form, presence of `cnf.jwk.kty` |
 | [Signature](modules/tr-sig.md) | TR-SIG | §3.2.1 | Private key leak detection, key type support, and the Ed25519 signature verification outcome |
-| [Runtime](modules/tr-rte.md) | TR-RTE | §3.1 | TEE platform enum, measurement format, RIM URI scheme |
+| [Runtime](modules/tr-rte.md) | TR-RTE | §3.1 | TEE platform enum, measurement format, RIM URI scheme, and verifier-issued nonce comparison |
 | [Policy](modules/tr-pol.md) | TR-POL | §3.1 | Policy bundle hash format, enforcement mode values, and whether the bundle at `policy_uri` has the declared digest |
 | [Appraisal](modules/tr-apr.md) | TR-APR | §3.1 | Appraisal status enum, verifier URI form, `policy_ref` URI form, and timestamp plausibility. The appraisal policy is never resolved |
 | [Transcript](modules/tr-txn.md) | TR-TXN | §3.1 | Tool-call transcript hash binding |
