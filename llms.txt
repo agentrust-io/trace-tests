@@ -17,6 +17,7 @@ TRACE Tests is the conformance suite for TRACE (Trust Runtime Attestation and Co
 - [Signature (TR-SIG)](https://tests.agentrust-io.com/docs/modules/tr-sig/index.md)
 - [Runtime (TR-RTE)](https://tests.agentrust-io.com/docs/modules/tr-rte/index.md)
 - [Policy (TR-POL)](https://tests.agentrust-io.com/docs/modules/tr-pol/index.md)
+- [Appraisal (TR-APR)](https://tests.agentrust-io.com/docs/modules/tr-apr/index.md)
 - [Transcript (TR-TXN)](https://tests.agentrust-io.com/docs/modules/tr-txn/index.md)
 - [Transparency (TR-ANC)](https://tests.agentrust-io.com/docs/modules/tr-anc/index.md)
 - [Provenance (TR-SCA)](https://tests.agentrust-io.com/docs/modules/tr-sca/index.md)
