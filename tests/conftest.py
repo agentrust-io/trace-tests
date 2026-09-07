@@ -1,6 +1,9 @@
 import base64
 import json
 import pathlib
+import subprocess
+import sys
+import textwrap
 import time
 
 import pytest
@@ -209,10 +212,6 @@ def attestation_report(trust_record: dict) -> dict:
 
 
 # --- environment guard ---
-import subprocess
-import sys
-import textwrap
-
 #: Packages this suite is meant to exercise from source.
 _PACKAGES_UNDER_TEST = ("trace_tests",)
 
@@ -240,6 +239,7 @@ def _subprocess_origin(package: str) -> pathlib.Path | None:
             capture_output=True,
             text=True,
             timeout=60,
+            check=False,  # a non-zero exit just means "cannot import", handled below
         )
     except (OSError, subprocess.SubprocessError):
         return None
