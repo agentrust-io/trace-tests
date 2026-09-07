@@ -19,7 +19,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install build
-        run: python -m pip install build
+        run: python -m pip install --require-hashes -r requirements/release.txt
 
       - name: Build distributions
         run: python -m build

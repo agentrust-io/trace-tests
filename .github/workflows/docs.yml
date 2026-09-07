@@ -44,8 +44,8 @@ jobs:
 
       - name: Install docs dependencies
         run: |
-          pip install -r requirements-docs.txt
-          pip install -e "."
+          pip install --require-hashes -r requirements/docs.txt
+          pip install --no-deps -e .
 
       - name: Configure git for gh-deploy
         run: |
