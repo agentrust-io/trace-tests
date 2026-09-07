@@ -209,14 +209,9 @@ def attestation_report(trust_record: dict) -> dict:
 
 
 # --- environment guard ---
-from __future__ import annotations
-
-import pathlib
 import subprocess
 import sys
 import textwrap
-
-import pytest
 
 #: Packages this suite is meant to exercise from source.
 _PACKAGES_UNDER_TEST = ("trace_tests",)
