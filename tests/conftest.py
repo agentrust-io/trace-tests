@@ -1,6 +1,9 @@
 import base64
 import json
 import pathlib
+import subprocess
+import sys
+import textwrap
 import time
 
 import pytest
@@ -206,3 +209,53 @@ def attestation_report(trust_record: dict) -> dict:
         "timestamp": trust_record["trace"]["iat"],
         "cnf_key_x": trust_record["trace"]["cnf"]["jwk"]["x"],
     }
+
+
+# --- environment guard ---
+#: Packages this suite is meant to exercise from source.
+_PACKAGES_UNDER_TEST = ("trace_tests",)
+
+#: Repository root, resolved from this file.
+_REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
+
+_PROBE = textwrap.dedent(
+    """
+    import importlib, sys
+    try:
+        m = importlib.import_module(sys.argv[1])
+    except Exception:
+        print("")
+    else:
+        print(getattr(m, "__file__", "") or "")
+    """
+)
+
+
+def _subprocess_origin(package: str) -> pathlib.Path | None:
+    """Where a fresh interpreter finds ``package``, or None if it cannot."""
+    try:
+        done = subprocess.run(
+            [sys.executable, "-c", _PROBE, package],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,  # a non-zero exit just means "cannot import", handled below
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    origin = done.stdout.strip()
+    return pathlib.Path(origin).resolve() if origin else None
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    for name in _PACKAGES_UNDER_TEST:
+        origin = _subprocess_origin(name)
+        if origin is None:
+            continue  # not importable from a subprocess; nothing can shadow
+        if _REPO_ROOT not in origin.parents:
+            raise pytest.UsageError(
+                f"{name} resolves to {origin} in a subprocess, outside "
+                f"{_REPO_ROOT}. Any test that shells out would exercise that "
+                "installed distribution instead of this working tree. Install "
+                f"editable (pip install -e .) or uninstall the shadowing {name}."
+            )
