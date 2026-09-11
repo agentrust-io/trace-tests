@@ -25,14 +25,14 @@ from typing import Any
 
 import pytest
 
-from trace_tests.modules import tr_anc, tr_env, tr_pol, tr_rte, tr_sca, tr_sig, tr_txn
+from trace_tests.modules import tr_anc, tr_apr, tr_env, tr_pol, tr_rte, tr_sca, tr_sig, tr_txn
 from trace_tests.result import Finding
 
 VECTORS = pathlib.Path(__file__).resolve().parent / "vectors"
 
 MODULES = {
     "tr_env": tr_env, "tr_sig": tr_sig, "tr_pol": tr_pol, "tr_rte": tr_rte,
-    "tr_txn": tr_txn, "tr_anc": tr_anc, "tr_sca": tr_sca,
+    "tr_txn": tr_txn, "tr_anc": tr_anc, "tr_sca": tr_sca, "tr_apr": tr_apr,
 }
 
 _CODE = re.compile(r"TR-[A-Z]{3}-\d{3}")
