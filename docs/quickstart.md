@@ -29,8 +29,8 @@ record = {
     "iat": int(time.time()),
     "subject": "spiffe://trust.example.org/agent/sample",
     "model": {
-        "provider": "anthropic",
-        "model_id": "claude-sonnet-4-6",
+        "provider": "example-provider",
+        "model_id": "example-model-1",
         "version": "20251001",
     },
     "runtime": {
