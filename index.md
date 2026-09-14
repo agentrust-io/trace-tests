@@ -1,4 +1,7 @@
 ---
+hide:
+  - navigation
+  - toc
 title: TRACE conformance suite
 description: Run this suite against a TRACE record to see which conformance level it reaches, and produce a report anyone can reproduce from the record and the suite version.
 ---

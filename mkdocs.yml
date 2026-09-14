@@ -44,7 +44,6 @@ theme:
         name: Switch to light mode
   features:
     - navigation.instant
-    - navigation.instant.progress
     - navigation.tracking
     - navigation.tabs
     - navigation.tabs.sticky
@@ -54,8 +53,9 @@ theme:
     - search.suggest
     - search.highlight
     - content.code.copy
-    - content.code.annotate
+    - content.tabs.link
     - toc.follow
+    - content.code.annotate
   icon:
     repo: fontawesome/brands/github
 
@@ -155,12 +155,10 @@ extra_css:
 
 nav:
   - Home: index.md
-  - Getting Started: docs/quickstart.md
-  - Tutorials:
-      - Writing conformance tests: docs/tutorials/writing-conformance-tests.md
-      - CI integration: docs/tutorials/ci-integration.md
-  - Test Modules:
-      - Overview: docs/modules.md
+  - Get started: docs/quickstart.md
+  - Specification:
+      - Conformance levels: docs/levels.md
+      - Test modules: docs/modules.md
       - Envelope (TR-ENV): docs/modules/tr-env.md
       - Signature (TR-SIG): docs/modules/tr-sig.md
       - Runtime (TR-RTE): docs/modules/tr-rte.md
@@ -169,16 +167,18 @@ nav:
       - Transcript (TR-TXN): docs/modules/tr-txn.md
       - Transparency (TR-ANC): docs/modules/tr-anc.md
       - Provenance (TR-SCA): docs/modules/tr-sca.md
-  - Conformance Levels: docs/levels.md
-  - Error Codes: docs/error-codes.md
-  - Self-verification: measurement/REPORT.md
+      - Error codes: docs/error-codes.md
+  - Guides:
+      - Writing conformance tests: docs/tutorials/writing-conformance-tests.md
+      - CI integration: docs/tutorials/ci-integration.md
+      - Self-verification: measurement/REPORT.md
   - Project:
-      - Sponsors: SPONSORS.md
+      - Known limitations: LIMITATIONS.md
       - Changelog: CHANGELOG.md
       - Contributing: CONTRIBUTING.md
-      - Code of Conduct: CODE_OF_CONDUCT.md
+      - Sponsors: SPONSORS.md
+      - Code of conduct: CODE_OF_CONDUCT.md
       - Privacy: PRIVACY.md
-      - Known limitations: LIMITATIONS.md
 
 extra_javascript:
   - https://agentrust-io.com/supernav.js
