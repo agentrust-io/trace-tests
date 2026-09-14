@@ -2,16 +2,16 @@
 
 > Conformance test suite for TRACE: Trust Runtime Attestation and Compliance Evidence
 
-TRACE Tests is the conformance suite for TRACE (Trust Runtime Attestation and Compliance Evidence), an open specification for portable, signed runtime evidence about AI agent runs. Use it to see which conformance level a TRACE record reaches and to produce a report anyone can reproduce. It checks the shape of attestation fields, not the attestation itself.
+TRACE Tests is the conformance suite for TRACE (Trust Runtime Attestation and Compliance Evidence), an open specification for portable, signed runtime evidence about AI agent runs. Use it to see which conformance level a TRACE record reaches and to produce a report anyone can reproduce. It checks the shape of attestation fields, not the attestation itself. It is part of AgenTrust, open specifications for verifiable AI: https://agentrust-io.com
 
-## Getting started
+## Get started
 
 - [Home](https://tests.agentrust-io.com/index.md)
 - [Get started](https://tests.agentrust-io.com/docs/quickstart/index.md)
+
+## Specification
+
 - [Conformance levels](https://tests.agentrust-io.com/docs/levels/index.md)
-
-## Test modules
-
 - [Test modules](https://tests.agentrust-io.com/docs/modules/index.md)
 - [Envelope (TR-ENV)](https://tests.agentrust-io.com/docs/modules/tr-env/index.md)
 - [Signature (TR-SIG)](https://tests.agentrust-io.com/docs/modules/tr-sig/index.md)
@@ -21,10 +21,17 @@ TRACE Tests is the conformance suite for TRACE (Trust Runtime Attestation and Co
 - [Transcript (TR-TXN)](https://tests.agentrust-io.com/docs/modules/tr-txn/index.md)
 - [Transparency (TR-ANC)](https://tests.agentrust-io.com/docs/modules/tr-anc/index.md)
 - [Provenance (TR-SCA)](https://tests.agentrust-io.com/docs/modules/tr-sca/index.md)
-
-## Reference
-
 - [Error codes](https://tests.agentrust-io.com/docs/error-codes/index.md)
+
+## Guides
+
 - [Writing conformance tests](https://tests.agentrust-io.com/docs/tutorials/writing-conformance-tests/index.md)
 - [CI integration](https://tests.agentrust-io.com/docs/tutorials/ci-integration/index.md)
+- [Self-verification](https://tests.agentrust-io.com/measurement/REPORT/index.md)
+
+## Project
+
+- [Known limitations](https://tests.agentrust-io.com/LIMITATIONS/index.md)
+- [Changelog](https://tests.agentrust-io.com/CHANGELOG/index.md)
+- [Contributing](https://tests.agentrust-io.com/CONTRIBUTING/index.md)
 

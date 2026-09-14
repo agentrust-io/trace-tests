@@ -1,0 +1,26 @@
+# Contributing
+
+Thank you for your interest in contributing to the TRACE test suite.
+
+## How to Contribute
+
+1. Fork the repository and create a feature branch
+1. Add or update conformance tests following the patterns in existing test files
+1. Commit using [Conventional Commits](https://www.conventionalcommits.org)
+1. Open a pull request against `main`
+
+## Using AI to contribute
+
+Use agents. A lot of this was built with them and saying otherwise would be dishonest.
+
+The rule is that you have to understand what you submit. If you cannot explain what your change does and how it interacts with the rest of the system, with the agent closed, do not open the pull request. Reviewing a change nobody can explain costs more than writing it did, and it becomes someone else's problem the moment it merges.
+
+That is a rule about understanding, not about tooling.
+
+## Reporting Security Issues
+
+Use [GitHub Security Advisories](https://github.com/agentrust-io/trace-tests/security/advisories/new) rather than public issues.
+
+## Code of Conduct
+
+See [CODE_OF_CONDUCT.md](https://tests.agentrust-io.com/CODE_OF_CONDUCT/index.md).

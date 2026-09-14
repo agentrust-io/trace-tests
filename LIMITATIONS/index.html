@@ -1,34 +1,48 @@
-<!doctype html><html lang=en class=no-js> <head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="Conformance test suite for TRACE: Trust Runtime Attestation and Compliance Evidence"><link href=https://tests.agentrust-io.com/LIMITATIONS/ rel=canonical><link href=../measurement/REPORT/ rel=prev><link href=../CHANGELOG/ rel=next><link rel=icon href=../docs/assets/icon.svg><meta name=generator content="mkdocs-1.6.1, mkdocs-material-9.7.7"><title>Known limitations - TRACE Tests</title><link rel=stylesheet href=../assets/stylesheets/main.ec1eaa64.min.css><link rel=stylesheet href=../assets/stylesheets/palette.ab4e12ef.min.css><link rel=stylesheet href=../assets/_mkdocstrings.css><link rel=stylesheet href="https://agentrust-io.com/design-system.css?v=22"><script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script><meta property=og:type content=website><meta property=og:site_name content="TRACE Tests"><meta property=og:title content="Known limitations - TRACE Tests"><meta property=og:description content="Conformance test suite for TRACE: Trust Runtime Attestation and Compliance Evidence"><meta content=https://tests.agentrust-io.com/LIMITATIONS/ property=og:url><meta property=og:image content=https://tests.agentrust-io.com/docs/assets/og.png><meta property=og:image:width content=1200><meta property=og:image:height content=630><meta property=og:image:alt content="TRACE Tests: the AgenTrust conformance suite"><meta property=og:locale content=en_US><meta name=twitter:card content=summary_large_image><meta name=twitter:title content="Known limitations - TRACE Tests"><meta name=twitter:description content="Conformance test suite for TRACE: Trust Runtime Attestation and Compliance Evidence"><meta name=twitter:image content=https://tests.agentrust-io.com/docs/assets/og.png><script type=application/ld+json>
+<!doctype html><html lang=en class=no-js> <head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="What this suite does not establish. A conformance report is only useful if the reader knows what it was never checking, so this is the companion to the..."><link href=https://tests.agentrust-io.com/LIMITATIONS/ rel=canonical><link href=../measurement/REPORT/ rel=prev><link href=../CHANGELOG/ rel=next><link rel=icon href=../docs/assets/icon.svg><meta name=generator content="mkdocs-1.6.1, mkdocs-material-9.7.7"><title>Known limitations - TRACE Tests</title><link rel=stylesheet href=../assets/stylesheets/main.ec1eaa64.min.css><link rel=stylesheet href=../assets/stylesheets/palette.ab4e12ef.min.css><link rel=stylesheet href=../assets/_mkdocstrings.css><link rel=stylesheet href="https://agentrust-io.com/design-system.css?v=22"><script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script><meta property=og:type content=website><meta property=og:site_name content=AgenTrust><meta property=og:title content="Known limitations - TRACE Tests"><meta property=og:description content="What this suite does not establish. A conformance report is only useful if the reader knows what it was never checking, so this is the companion to the..."><meta content=https://tests.agentrust-io.com/LIMITATIONS/ property=og:url><meta property=og:image content=https://tests.agentrust-io.com/docs/assets/og.png><meta property=og:image:width content=1200><meta property=og:image:height content=630><meta property=og:image:alt content="TRACE Tests: the AgenTrust conformance suite"><meta property=og:locale content=en_US><meta name=twitter:card content=summary_large_image><meta name=twitter:title content="Known limitations - TRACE Tests"><meta name=twitter:description content="What this suite does not establish. A conformance report is only useful if the reader knows what it was never checking, so this is the companion to the..."><meta name=twitter:image content=https://tests.agentrust-io.com/docs/assets/og.png><script type=application/ld+json>
   {
     "@context": "https://schema.org",
     "@graph": [
       {
-        "@type": "SoftwareApplication",
-        "name": "TRACE Tests",
-        "applicationCategory": "DeveloperApplication",
-        "description": "Conformance tests and an integration harness for TRACE records. It reports which conformance level a record reaches and checks the shape of attestation fields, not the attestation itself.",
-        "url": "https://tests.agentrust-io.com/",
-        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-        "author": { "@type": "Organization", "name": "AgenTrust", "url": "https://agentrust-io.com" },
-        "isPartOf": { "@type": "WebSite", "name": "TRACE Tests", "url": "https://tests.agentrust-io.com/" }
-      },
-      {
         "@type": "Organization",
+        "@id": "https://agentrust-io.com/#organization",
         "name": "AgenTrust",
-        "url": "https://agentrust-io.com",
+        "url": "https://agentrust-io.com/",
         "sameAs": [
           "https://github.com/agentrust-io",
-          "https://agentrust-io.com/demos/",
           "https://trace.agentrust-io.com",
-          "https://cmcp.agentrust-io.com",
           "https://manifest.agentrust-io.com",
-          "https://ca2a.agentrust-io.com"
+          "https://cmcp.agentrust-io.com",
+          "https://ca2a.agentrust-io.com",
+          "https://wcm.agentrust-io.com",
+          "https://tests.agentrust-io.com",
+          "https://governance.agentrust-io.com"
         ]
       },
       {
         "@type": "WebSite",
+        "@id": "https://tests.agentrust-io.com/#website",
         "name": "TRACE Tests",
-        "url": "https://tests.agentrust-io.com/"
+        "url": "https://tests.agentrust-io.com/",
+        "description": "Conformance test suite for TRACE: Trust Runtime Attestation and Compliance Evidence",
+        "publisher": { "@id": "https://agentrust-io.com/#organization" }
+      },
+      {
+        "@type": "TechArticle",
+        "@id": "https://tests.agentrust-io.com/LIMITATIONS/#page",
+        "url": "https://tests.agentrust-io.com/LIMITATIONS/",
+        "name": "Known limitations - TRACE Tests",
+        "headline": "Known limitations - TRACE Tests",
+        "description": "What this suite does not establish. A conformance report is only useful if the reader knows what it was never checking, so this is the companion to the...",
+        "inLanguage": "en",
+        "isPartOf": { "@id": "https://tests.agentrust-io.com/#website" },
+        "publisher": { "@id": "https://agentrust-io.com/#organization" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "TRACE Tests", "item": "https://tests.agentrust-io.com/" },
+          { "@type": "ListItem", "position": 2, "name": "Known limitations", "item": "https://tests.agentrust-io.com/LIMITATIONS/" }
+        ]
       }
     ]
   }
