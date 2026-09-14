@@ -1,8 +1,8 @@
 # TRACE Tests
 
-> Conformance test suite for TRACE — Trust Runtime Attestation and Compliance Evidence
+> Conformance test suite for TRACE: Trust Runtime Attestation and Compliance Evidence
 
-TRACE Tests is the conformance suite for TRACE (Trust Runtime Attestation and Compliance Evidence), the AgenTrust open standard for signed, hardware-attested AI agent governance records. Use it to check that your attestation receipts satisfy the specification, at each conformance level, before shipping them to production.
+TRACE Tests is the conformance suite for TRACE (Trust Runtime Attestation and Compliance Evidence), an open specification for portable, signed runtime evidence about AI agent runs. Use it to see which conformance level a TRACE record reaches and to produce a report anyone can reproduce. It checks the shape of attestation fields, not the attestation itself.
 
 # Getting started
 
@@ -72,15 +72,16 @@ A conformance report that looks authoritative and cannot be checked is the same 
 
 ## Test modules
 
-| Module       | ID       | Tests                                          |
-| ------------ | -------- | ---------------------------------------------- |
-| Envelope     | `TR-ENV` | EAT structure, required fields, `iat` validity |
-| Signature    | `TR-SIG` | ES256/ES384/EdDSA, key binding, chain          |
-| Runtime      | `TR-RTE` | TEE platform, measurement format, RIM URI      |
-| Policy       | `TR-POL` | Bundle hash, enforcement mode, TEE binding     |
-| Transcript   | `TR-TXN` | Tool-call transcript hash binding (Phase 2+)   |
-| Transparency | `TR-ANC` | SCITT receipt URI, inclusion proof             |
-| Provenance   | `TR-SCA` | SLSA level, builder URI, digest format         |
+| Module       | ID       | Tests                                                       |
+| ------------ | -------- | ----------------------------------------------------------- |
+| Envelope     | `TR-ENV` | EAT structure, required fields, `iat` validity              |
+| Signature    | `TR-SIG` | ES256/ES384/EdDSA, key binding, chain                       |
+| Runtime      | `TR-RTE` | TEE platform, measurement format, RIM URI                   |
+| Policy       | `TR-POL` | Bundle hash, enforcement mode, TEE binding                  |
+| Appraisal    | `TR-APR` | Appraisal status, verifier URI, policy reference, timestamp |
+| Transcript   | `TR-TXN` | Tool-call transcript hash binding (Phase 2+)                |
+| Transparency | `TR-ANC` | SCITT receipt URI, inclusion proof                          |
+| Provenance   | `TR-SCA` | SLSA level, builder URI, digest format                      |
 
 The suite tracks [TRACE Spec v0.2](https://trace.agentrust-io.com). See [Changelog](https://tests.agentrust-io.com/CHANGELOG/index.md) for what moved between suite versions.
 
@@ -114,8 +115,8 @@ record = {
     "iat": int(time.time()),
     "subject": "spiffe://trust.example.org/agent/sample",
     "model": {
-        "provider": "anthropic",
-        "model_id": "claude-sonnet-4-6",
+        "provider": "example-provider",
+        "model_id": "example-model-1",
         "version": "20251001",
     },
     "runtime": {
@@ -223,11 +224,11 @@ Error codes follow the form `TR-<MODULE>-<NNN>`. A failing or unverified finding
 
 TRACE defines three conformance levels. Higher levels require all lower-level modules plus additional ones.
 
-| Level | Required Modules               | Use Case                                 |
-| ----- | ------------------------------ | ---------------------------------------- |
-| **0** | TR-ENV, TR-SIG, TR-POL, TR-APR | Software-only development and staging    |
-| **1** | Level 0 + TR-RTE, TR-SCA       | Production TEE-attested records          |
-| **2** | Level 1 + TR-TXN, TR-ANC       | Full records with transparency anchoring |
+| Level | Required Modules               | Use Case                                            |
+| ----- | ------------------------------ | --------------------------------------------------- |
+| **0** | TR-ENV, TR-SIG, TR-POL, TR-APR | Software-only development and staging               |
+| **1** | Level 0 + TR-RTE, TR-SCA       | Records that declare a TEE platform and measurement |
+| **2** | Level 1 + TR-TXN, TR-ANC       | Full records with transparency anchoring            |
 
 ## Level 0 — Software-only
 
@@ -241,8 +242,8 @@ Level 0 records are signed with a software key. The `runtime.platform` must be `
   "iat": 1750000000,
   "subject": "spiffe://trust.example.org/agent/my-agent",
   "model": {
-    "provider": "anthropic",
-    "model_id": "claude-sonnet-4-6",
+    "provider": "example-provider",
+    "model_id": "example-model-1",
     "version": "20251001"
   },
   "runtime": {
@@ -302,8 +303,8 @@ Level 1 adds hardware attestation. `runtime.platform` must be a value from the `
   "iat": 1750000000,
   "subject": "spiffe://trust.example.org/agent/my-agent",
   "model": {
-    "provider": "anthropic",
-    "model_id": "claude-sonnet-4-6",
+    "provider": "example-provider",
+    "model_id": "example-model-1",
     "version": "20251001"
   },
   "runtime": {
@@ -649,11 +650,11 @@ ______________________________________________________________________
 
 TRACE defines three levels. Each level activates a cumulative set of modules:
 
-| Level | Required modules         | Typical use                                    |
-| ----- | ------------------------ | ---------------------------------------------- |
-| 0     | TR-ENV, TR-SIG, TR-POL   | Software-only development and staging          |
-| 1     | Level 0 + TR-RTE, TR-SCA | Production TEE-attested records                |
-| 2     | Level 1 + TR-TXN, TR-ANC | Full records with SCITT transparency anchoring |
+| Level | Required modules         | Typical use                                         |
+| ----- | ------------------------ | --------------------------------------------------- |
+| 0     | TR-ENV, TR-SIG, TR-POL   | Software-only development and staging               |
+| 1     | Level 0 + TR-RTE, TR-SCA | Records that declare a TEE platform and measurement |
+| 2     | Level 1 + TR-TXN, TR-ANC | Full records with SCITT transparency anchoring      |
 
 At Level 0 you can set `runtime.platform` to `"software-only"` and skip hardware attestation entirely. At Level 1 you must supply a real TEE measurement from AMD SEV-SNP, Intel TDX, NVIDIA H100, or similar. Level 2 adds a SCITT receipt URI and a bound tool-call transcript hash.
 

@@ -64,14 +64,15 @@ A conformance report that looks authoritative and cannot be checked is the same 
 
 ## Test modules
 
-| Module       | ID       | Tests                                          |
-| ------------ | -------- | ---------------------------------------------- |
-| Envelope     | `TR-ENV` | EAT structure, required fields, `iat` validity |
-| Signature    | `TR-SIG` | ES256/ES384/EdDSA, key binding, chain          |
-| Runtime      | `TR-RTE` | TEE platform, measurement format, RIM URI      |
-| Policy       | `TR-POL` | Bundle hash, enforcement mode, TEE binding     |
-| Transcript   | `TR-TXN` | Tool-call transcript hash binding (Phase 2+)   |
-| Transparency | `TR-ANC` | SCITT receipt URI, inclusion proof             |
-| Provenance   | `TR-SCA` | SLSA level, builder URI, digest format         |
+| Module       | ID       | Tests                                                       |
+| ------------ | -------- | ----------------------------------------------------------- |
+| Envelope     | `TR-ENV` | EAT structure, required fields, `iat` validity              |
+| Signature    | `TR-SIG` | ES256/ES384/EdDSA, key binding, chain                       |
+| Runtime      | `TR-RTE` | TEE platform, measurement format, RIM URI                   |
+| Policy       | `TR-POL` | Bundle hash, enforcement mode, TEE binding                  |
+| Appraisal    | `TR-APR` | Appraisal status, verifier URI, policy reference, timestamp |
+| Transcript   | `TR-TXN` | Tool-call transcript hash binding (Phase 2+)                |
+| Transparency | `TR-ANC` | SCITT receipt URI, inclusion proof                          |
+| Provenance   | `TR-SCA` | SLSA level, builder URI, digest format                      |
 
 The suite tracks [TRACE Spec v0.2](https://trace.agentrust-io.com). See [Changelog](https://tests.agentrust-io.com/CHANGELOG/index.md) for what moved between suite versions.

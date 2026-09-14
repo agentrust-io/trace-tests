@@ -1,8 +1,8 @@
 # TRACE Tests
 
-> Conformance test suite for TRACE — Trust Runtime Attestation and Compliance Evidence
+> Conformance test suite for TRACE: Trust Runtime Attestation and Compliance Evidence
 
-TRACE Tests is the conformance suite for TRACE (Trust Runtime Attestation and Compliance Evidence), the AgenTrust open standard for signed, hardware-attested AI agent governance records. Use it to check that your attestation receipts satisfy the specification, at each conformance level, before shipping them to production.
+TRACE Tests is the conformance suite for TRACE (Trust Runtime Attestation and Compliance Evidence), an open specification for portable, signed runtime evidence about AI agent runs. Use it to see which conformance level a TRACE record reaches and to produce a report anyone can reproduce. It checks the shape of attestation fields, not the attestation itself.
 
 ## Getting started
 
