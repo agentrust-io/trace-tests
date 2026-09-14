@@ -4,7 +4,7 @@
 
 # TRACE Conformance Test Suite
 
-### Verify your TRACE implementation before shipping
+### Check a TRACE record and see which conformance level it reaches
 
 <p align="center">
   <a href="https://tests.agentrust-io.com">
@@ -25,7 +25,7 @@
 [![CI](https://github.com/agentrust-io/trace-tests/actions/workflows/ci.yml/badge.svg)](https://github.com/agentrust-io/trace-tests/actions/workflows/ci.yml)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white&style=flat)](https://discord.gg/grgzFEHgkj)
 
-> **Test suite v0.2.** Tracks [TRACE Spec v0.2](https://github.com/agentrust-io/trace-spec).
+> Tracks [TRACE Spec v0.2](https://github.com/agentrust-io/trace-spec).
 
 Check a TRACE record, inspect the findings, and produce a reproducible conformance report. The suite checks the record and supplied evidence; a passing report does not establish that an entire implementation meets every specification requirement.
 

@@ -1,6 +1,6 @@
 ---
 title: Verify your TRACE implementation
-description: Run this suite against your implementation to find out which TRACE conformance level it actually reaches, and produce a report you can hand to an auditor, a counterparty, or an acquirer.
+description: Run this suite against a TRACE record to see which conformance level it reaches, and produce a report anyone can reproduce from the record and the suite version.
 ---
 
 # TRACE Test Suite
@@ -84,6 +84,7 @@ A conformance report that looks authoritative and cannot be checked is the same 
 | Signature | `TR-SIG` | ES256/ES384/EdDSA, key binding, chain |
 | Runtime | `TR-RTE` | TEE platform, measurement format, RIM URI |
 | Policy | `TR-POL` | Bundle hash, enforcement mode, TEE binding |
+| Appraisal | `TR-APR` | Appraisal status, verifier URI, policy reference, timestamp |
 | Transcript | `TR-TXN` | Tool-call transcript hash binding (Phase 2+) |
 | Transparency | `TR-ANC` | SCITT receipt URI, inclusion proof |
 | Provenance | `TR-SCA` | SLSA level, builder URI, digest format |

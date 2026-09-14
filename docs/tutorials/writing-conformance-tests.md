@@ -23,7 +23,7 @@ TRACE defines three levels. Each level activates a cumulative set of modules:
 | Level | Required modules | Typical use |
 |-------|-----------------|-------------|
 | 0 | TR-ENV, TR-SIG, TR-POL | Software-only development and staging |
-| 1 | Level 0 + TR-RTE, TR-SCA | Production TEE-attested records |
+| 1 | Level 0 + TR-RTE, TR-SCA | Records that declare a TEE platform and measurement |
 | 2 | Level 1 + TR-TXN, TR-ANC | Full records with SCITT transparency anchoring |
 
 At Level 0 you can set `runtime.platform` to `"software-only"` and skip hardware attestation entirely. At Level 1 you must supply a real TEE measurement from AMD SEV-SNP, Intel TDX, NVIDIA H100, or similar. Level 2 adds a SCITT receipt URI and a bound tool-call transcript hash.

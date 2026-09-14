@@ -5,7 +5,7 @@ TRACE defines three conformance levels. Higher levels require all lower-level mo
 | Level | Required Modules | Use Case |
 |-------|-----------------|----------|
 | **0** | TR-ENV, TR-SIG, TR-POL, TR-APR | Software-only development and staging |
-| **1** | Level 0 + TR-RTE, TR-SCA | Production TEE-attested records |
+| **1** | Level 0 + TR-RTE, TR-SCA | Records that declare a TEE platform and measurement |
 | **2** | Level 1 + TR-TXN, TR-ANC | Full records with transparency anchoring |
 
 ## Level 0 — Software-only
@@ -20,8 +20,8 @@ Level 0 records are signed with a software key. The `runtime.platform` must be `
   "iat": 1750000000,
   "subject": "spiffe://trust.example.org/agent/my-agent",
   "model": {
-    "provider": "anthropic",
-    "model_id": "claude-sonnet-4-6",
+    "provider": "example-provider",
+    "model_id": "example-model-1",
     "version": "20251001"
   },
   "runtime": {
@@ -82,8 +82,8 @@ Level 1 adds hardware attestation. `runtime.platform` must be a value from the `
   "iat": 1750000000,
   "subject": "spiffe://trust.example.org/agent/my-agent",
   "model": {
-    "provider": "anthropic",
-    "model_id": "claude-sonnet-4-6",
+    "provider": "example-provider",
+    "model_id": "example-model-1",
     "version": "20251001"
   },
   "runtime": {
