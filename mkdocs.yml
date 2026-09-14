@@ -9,6 +9,8 @@ copyright: "© 2026 AgenTrust contributors. Apache 2.0"
 
 exclude_docs: |
   .github/
+  hooks/
+  overrides/
   node_modules/
   src/
   tests/
@@ -59,6 +61,10 @@ theme:
   icon:
     repo: fontawesome/brands/github
 
+# Gives each page its own meta description; see hooks/seo.py.
+hooks:
+  - hooks/seo.py
+
 plugins:
   - search:
       lang: en
@@ -70,13 +76,14 @@ plugins:
         portable, signed runtime evidence about AI agent runs. Use it to see
         which conformance level a TRACE record reaches and to produce a report
         anyone can reproduce. It checks the shape of attestation fields, not
-        the attestation itself.
+        the attestation itself. It is part of AgenTrust, open specifications
+        for verifiable AI: https://agentrust-io.com
       sections:
-        Getting started:
+        Get started:
           - index.md
           - docs/quickstart.md
+        Specification:
           - docs/levels.md
-        Test modules:
           - docs/modules.md
           - docs/modules/tr-env.md
           - docs/modules/tr-sig.md
@@ -86,10 +93,15 @@ plugins:
           - docs/modules/tr-txn.md
           - docs/modules/tr-anc.md
           - docs/modules/tr-sca.md
-        Reference:
           - docs/error-codes.md
+        Guides:
           - docs/tutorials/writing-conformance-tests.md
           - docs/tutorials/ci-integration.md
+          - measurement/REPORT.md
+        Project:
+          - LIMITATIONS.md
+          - CHANGELOG.md
+          - CONTRIBUTING.md
   - minify:
       minify_html: true
   - mkdocstrings:
