@@ -4,6 +4,8 @@
 
 # TRACE Conformance Test Suite
 
+Community updates and contributor highlights: [AgenTrust on LinkedIn](https://www.linkedin.com/company/agentrust-io/).
+
 ### Check a TRACE record and see which conformance level it reaches
 
 <p align="center">
