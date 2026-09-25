@@ -22,7 +22,7 @@ from typing import Any
 
 LEAF_PREFIX = b"\x00"
 NODE_PREFIX = b"\x01"
-_HASH_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+_HASH_RE = re.compile(r"^sha256:[0-9a-f]{64}$")  # fullmatch: $ admits a trailing newline
 
 __all__ = ["InclusionError", "canonical_claim_bytes", "decode_hash", "verify_inclusion"]
 
@@ -31,16 +31,50 @@ class InclusionError(ValueError):
     """The receipt is malformed, as opposed to proving nothing."""
 
 
+_SAFE_INT = 2**53 - 1
+
+
+def _outside_profile(value: Any) -> str | None:
+    """Name the first value registry-anchor-v1 section 1 excludes, or None.
+
+    Non-integer numbers (NaN and the infinities among them) and integers outside
+    -(2**53 - 1) to 2**53 - 1 are outside the anchor-leaf profile: two
+    implementations of the four serialization rules write different bytes for
+    them, so a proof over them only proves what Python's ``json.dumps`` wrote.
+    Iterative, because the claim is attacker-controlled and may be deep.
+    """
+    stack = [value]
+    while stack:
+        v = stack.pop()
+        if isinstance(v, bool) or v is None or isinstance(v, str):
+            continue
+        if isinstance(v, int):
+            if not -_SAFE_INT <= v <= _SAFE_INT:
+                return f"integer {v} is outside the safe-integer range"
+        elif isinstance(v, float):
+            return f"non-integer number {v!r}"
+        elif isinstance(v, dict):
+            stack.extend(v.values())
+        elif isinstance(v, list):
+            stack.extend(v)
+    return None
+
+
 def canonical_claim_bytes(claim: dict[str, Any]) -> bytes:
     """Canonical anchor-leaf JSON bytes of the complete signed claim."""
     if not isinstance(claim, dict):
         raise InclusionError("claim must be a JSON object")
+    excluded = _outside_profile(claim)
+    if excluded is not None:
+        raise InclusionError(
+            f"claim is outside the anchor-leaf profile (registry-anchor-v1 section 1): {excluded}"
+        )
     return json.dumps(claim, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("ascii")
 
 
 def decode_hash(value: object) -> bytes:
     """Decode ``sha256:<64 lowercase hex>`` to 32 raw bytes."""
-    if not isinstance(value, str) or not _HASH_RE.match(value):
+    if not isinstance(value, str) or not _HASH_RE.fullmatch(value):
         raise InclusionError(f"malformed hash value: {value!r}")
     return bytes.fromhex(value.split(":", 1)[1])
 

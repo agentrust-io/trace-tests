@@ -21,6 +21,7 @@ finding, so a record with nothing to check is never reported as verified.
 from __future__ import annotations
 
 import base64
+import re
 from typing import Any
 
 import rfc8785
@@ -31,11 +32,25 @@ _SUPPORTED_KTY = {"OKP", "EC"}
 _ED25519_CRV = "Ed25519"
 
 
+_B64URL_RE = re.compile(r"[A-Za-z0-9_-]*\Z")
+
+
 def _b64url_decode(s: str) -> bytes:
-    pad = 4 - len(s) % 4
-    if pad != 4:
-        s += "=" * pad
-    return base64.urlsafe_b64decode(s)
+    """Decode unpadded base64url (RFC 7515 section 2), accepting one spelling only.
+
+    ``base64.urlsafe_b64decode`` is lenient: it drops characters outside the
+    alphabet, takes the standard ``+`` and ``/`` as well, accepts padding, and
+    ignores the unused low bits of the last character. Each of those gives a
+    different string for the same bytes. The signature sits outside the body it
+    signs, so every such spelling was a different record that still verified.
+    Anything but the canonical unpadded form is refused.
+    """
+    if not isinstance(s, str) or not _B64URL_RE.match(s) or len(s) % 4 == 1:
+        raise ValueError("not unpadded base64url")
+    raw = base64.urlsafe_b64decode(s + "=" * (-len(s) % 4))
+    if base64.urlsafe_b64encode(raw).rstrip(b"=").decode("ascii") != s:
+        raise ValueError("not the canonical base64url encoding of its bytes")
+    return raw
 
 
 def _canonical_json(d: dict[str, Any]) -> bytes:
@@ -74,6 +89,11 @@ def _canonical_body(d: dict[str, Any]) -> tuple[bytes | None, str]:
         return _canonical_json(d), ""
     except rfc8785.CanonicalizationError as exc:
         return None, str(exc)
+    except UnicodeError as exc:
+        # A lone surrogate in an object *key* fails inside rfc8785's UTF-16 key
+        # sort with UnicodeEncodeError, outside its own hierarchy. The same
+        # character in a value is a CanonicalizationError. Same meaning either way.
+        return None, f"lone surrogate in an object key ({exc})"
 
 
 def _verify_ed25519(pub_x: str, sig_b64: str, body: bytes) -> tuple[bool, str]:

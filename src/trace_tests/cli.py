@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import datetime as _dt
 import importlib.metadata
-import json
 import pathlib
 import re
 import sys
@@ -15,7 +14,7 @@ import click
 
 from trace_tests import __version__
 from trace_tests import report as report_mod
-from trace_tests.loader import LoadError, load_record
+from trace_tests.loader import LoadError, load_record, loads_strict
 from trace_tests.modules.tr_env import DEFAULT_MAX_AGE_SECONDS
 from trace_tests.modules.unverified import finding_counts_as_level_failure
 from trace_tests.result import Status
@@ -88,12 +87,12 @@ def _load_receipt(path: str | None) -> dict | None:
     if path is None:
         return None
     try:
-        with open(path, encoding="utf-8") as fh:
-            data = json.load(fh)
+        with open(path, "rb") as fh:
+            data = loads_strict(fh.read())
     except OSError as exc:
         click.echo(f"Error: cannot read receipt {path}: {exc}", err=True)
         sys.exit(2)
-    except json.JSONDecodeError as exc:
+    except LoadError as exc:
         click.echo(f"Error: receipt {path} is not valid JSON: {exc}", err=True)
         sys.exit(2)
     if not isinstance(data, dict):
@@ -122,12 +121,12 @@ def _load_policy_resolver(policy_dir: str | None) -> Callable[[str], bytes] | No
     root = pathlib.Path(policy_dir)
     manifest_path = root / "resolutions.json"
     try:
-        with open(manifest_path, encoding="utf-8") as fh:
-            data = json.load(fh)
+        with open(manifest_path, "rb") as fh:
+            data = loads_strict(fh.read())
     except OSError as exc:
         click.echo(f"Error: cannot read policy manifest {manifest_path}: {exc}", err=True)
         sys.exit(2)
-    except json.JSONDecodeError as exc:
+    except LoadError as exc:
         click.echo(f"Error: policy manifest {manifest_path} is not valid JSON: {exc}", err=True)
         sys.exit(2)
     if not isinstance(data, dict):
