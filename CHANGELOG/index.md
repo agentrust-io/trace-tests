@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Fixed
+
+- TR-SIG decodes `signature` and `cnf.jwk.x` as unpadded base64url in its one canonical spelling. The standard alphabet, padding, characters outside the alphabet and nonzero trailing bits were all accepted before, and since the signature sits outside the body it signs, each was a different record that still verified.
+- Records, anchor receipts and policy manifests with duplicate member names are refused at load (exit 2). `json.loads` kept the last value, the signature was checked over it, and a consumer whose parser keeps the first read a value no signature covered. RFC 8785 is defined over I-JSON, which forbids duplicates.
+- Digest, `subject` and receipt hash checks use `fullmatch`. Python's `$` matched before a trailing newline, so `sha256:<64 hex>\n` passed TR-RTE-002, TR-SCA-002, TR-TXN-001, TR-POL-001 and TR-ENV-003.
+- TR-ANC-002 refuses claims outside the anchor-leaf profile of registry-anchor-v1 section 1: non-integer numbers and integers outside the safe range, whose leaf bytes differ between implementations.
+- Untrusted input no longer reaches the CLI as a traceback: a non-ASCII `runtime.nonce` (`TypeError` from `hmac.compare_digest`), a lone surrogate in an object key (`UnicodeEncodeError` from `rfc8785`), a non-string `transparency` in `report --html`, and non-UTF-8, over-deep or unreadable input files. Each is now a finding or a load error.
+- ClusterFuzzLite targets over the record loader and every module, the signature path and the anchor receipt, run on pull requests and nightly.
+
 ## v0.6.0 - 2026-09-25
 
 ### Changed
