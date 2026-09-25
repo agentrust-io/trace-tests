@@ -2,13 +2,58 @@
 
 ## Unreleased
 
-- Add machine-readable execution accounting for the bounded `TR-APR-001`,
-  `TR-POL-003`, and `TR-SCA-002` pilot to CLI JSON reports. Accounted findings
+## v0.6.0 - 2026-09-25
+
+### Changed
+
+- **Level 2 now verifies the anchor instead of parsing its URI (#79, closes #70).**
+  `TR-ANC-001` only ever checked that `transparency` was a well-formed https URI,
+  so any record could clear Level 2 by typing a string. The new `TR-ANC-002`
+  replays the record's RFC 9162 inclusion proof against the committed Merkle
+  root, offline and standard library only. The receipt is passed with the new
+  `--receipt` option on `verify` and `report`; without one, `TR-ANC-002` fails.
+  A record that passed Level 2 on 0.5.1 without a receipt will fail it on 0.6.0.
+
+### Added
+
+- **`TR-ENV-005`: `cnf.jwk` must carry no private key material (#98).** A record
+  carrying its own private key (`d` and the other private JWK members) passed
+  the whole suite, because `TR-ENV-004` only checked that `kty` was present. The
+  packaged `schemas/trace-claim.json` copy is closed the same way. This is the
+  trace-tests half of GHSA-vc4p-h84j-7qxj; trace-spec#296 fixed the other two
+  schema copies.
+- **`TR-APR`: appraisal well-formedness at every level (#82, closes #63).**
+  `appraisal` is required by the schema and no module read it. Five codes now
+  check the status enum, the verifier URI and appraisal timing. No network, no
+  filesystem, no resolver.
+- **`TR-POL-003` resolves `policy_uri` against `bundle_hash` (#69).** A
+  `policy_resolver` callable on `runner.run` and a `--policy-dir` option on the
+  CLI supply the policy bytes; the check compares their digest to the record.
+- Machine-readable execution accounting in CLI JSON reports for the bounded
+  `TR-APR-001`, `TR-POL-003` and `TR-SCA-002` pilot (#93). Accounted findings
   and accounting come from one immutable execution snapshot; unreconciled
   accounting is rejected on that path, the operational policy-correspondence rule
   is separated from supporting schema locators and all carry value digests for
   comparison against the referenced trace-spec bytes, scheduler non-execution
   carries a reason, and existing verdict policy and CLI exit behavior are unchanged.
+
+### Fixed
+
+- `TR-SIG` reports a record with no RFC 8785 canonical form (an integer outside
+  the safe range, a non-finite float) as a finding instead of raising and ending
+  the run (#86).
+- Malformed arrays or objects in `policy.enforcement_mode`, `runtime.platform`,
+  `build_provenance.slsa_level` and `cnf.jwk.kty` raised
+  `TypeError` before the runner could return findings; boolean SLSA levels
+  passed as `1` and `0`. Both are now findings (#85, closes #84).
+
+### Internal
+
+- The finding to level failure decision lives in one place, read by both the
+  CLI and the JSON report (#88).
+- Release and CI actions pinned to SHAs with a token permissions floor (#97);
+  CI installs from hash-pinned locks (#101); actionlint and a test-environment
+  guard added (#100).
 
 ## v0.5.1 — 2026-08-22
 
