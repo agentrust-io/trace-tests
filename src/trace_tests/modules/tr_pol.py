@@ -19,6 +19,8 @@ from trace_tests.accounting import (
 )
 from trace_tests.result import Finding, Status
 
+# Byte-equal to the schema pattern (test_digest_parity) and always applied with
+# fullmatch: Python's $ also matches before a trailing newline, ECMA-262's does not.
 _DIGEST_RE = re.compile(r"^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})$")
 #: Digest algorithms this module can compute, keyed by the prefix a record uses.
 #: Kept in step with `_DIGEST_RE`: a prefix the pattern admits and this map does
@@ -179,7 +181,7 @@ def _resolution_finding(
         )
 
     bundle_hash = str(policy.get("bundle_hash", ""))
-    if not _DIGEST_RE.match(bundle_hash):
+    if not _DIGEST_RE.fullmatch(bundle_hash):
         return _observe(
             "TR-POL",
             "bundle_hash_malformed",
@@ -280,7 +282,7 @@ def check(
         ]
 
     bundle_hash = policy.get("bundle_hash", "")
-    if _DIGEST_RE.match(str(bundle_hash)):
+    if _DIGEST_RE.fullmatch(str(bundle_hash)):
         findings.append(Finding("TR-POL-001", Status.PASS, "policy.bundle_hash has valid digest format"))
     else:
         findings.append(Finding(

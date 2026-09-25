@@ -8,6 +8,8 @@ from typing import Any
 
 from trace_tests.result import Finding, Status
 
+# Byte-equal to the schema pattern (test_digest_parity) and always applied with
+# fullmatch: Python's $ also matches before a trailing newline, ECMA-262's does not.
 _DIGEST_RE = re.compile(r"^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})$")
 _VALID_PLATFORMS = frozenset(
     {
@@ -79,7 +81,7 @@ def check(
         )
 
     measurement = runtime.get("measurement", "")
-    if _DIGEST_RE.match(str(measurement)):
+    if _DIGEST_RE.fullmatch(str(measurement)):
         findings.append(
             Finding("TR-RTE-002", Status.PASS, "runtime.measurement has valid digest format")
         )
@@ -129,7 +131,13 @@ def check(
                     "TR-RTE-004: runtime.nonce is missing or empty",
                 )
             )
-        elif hmac.compare_digest(actual_nonce, expected_nonce):
+        # Compared as bytes: compare_digest raises TypeError on a str that is not
+        # ASCII, and the record's nonce is attacker-controlled. surrogatepass so a
+        # lone surrogate, which json.loads accepts, still encodes.
+        elif hmac.compare_digest(
+            actual_nonce.encode("utf-8", "surrogatepass"),
+            expected_nonce.encode("utf-8", "surrogatepass"),
+        ):
             findings.append(
                 Finding("TR-RTE-004", Status.PASS, "runtime.nonce matches the verifier challenge")
             )

@@ -489,8 +489,13 @@ def to_html(data: ReportData) -> str:
                     f"<td>{e(f.message)}</td></tr>"
                 )
 
+    # The record's own value, which TR-ANC-001 may have failed for not being a
+    # string; html.escape takes only a str.
+    shown = data.transparency
+    if not isinstance(shown, str):
+        shown = json.dumps(shown, ensure_ascii=True)
     anchor = (
-        f"<tr><th>Transparency anchor</th><td class='mono'>{e(data.transparency)}</td></tr>"
+        f"<tr><th>Transparency anchor</th><td class='mono'>{e(shown)}</td></tr>"
         if data.transparency
         else "<tr><th>Transparency anchor</th><td>none — record is unanchored</td></tr>"
     )

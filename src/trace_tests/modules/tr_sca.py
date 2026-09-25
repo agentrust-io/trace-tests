@@ -15,6 +15,8 @@ from trace_tests.accounting import (
 )
 from trace_tests.result import Finding, Status
 
+# Byte-equal to the schema pattern (test_digest_parity) and always applied with
+# fullmatch: Python's $ also matches before a trailing newline, ECMA-262's does not.
 _DIGEST_RE = re.compile(r"^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})$")
 _SLSA_LEVELS = frozenset({0,1, 2, 3})
 
@@ -80,7 +82,7 @@ def check(trace: dict[str, Any]) -> list[Finding]:
         ))
 
     digest = prov.get("digest", "")
-    if _DIGEST_RE.match(str(digest)):
+    if _DIGEST_RE.fullmatch(str(digest)):
         findings.append(_observe(
             "TR-SCA", "digest_valid",
             Finding(

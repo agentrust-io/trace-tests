@@ -13,6 +13,7 @@ _PROFILE = "tag:agentrust-io.com,2026:trace-v0.2"
 # agentrust-trace reference model, which already refuses these.
 _JWK_PRIVATE_PARAMS = frozenset({"d", "p", "q", "dp", "dq", "qi", "k"})
 
+# Applied with fullmatch: $ alone also matches before a trailing newline.
 _SUBJECT_RE = re.compile(r'^(spiffe://[^/]+/.+|did:[a-z0-9]+:.+)$')
 _IAT_MIN = 1_700_000_000
 
@@ -51,7 +52,7 @@ def check(trace: dict[str, Any], max_age_seconds: int = DEFAULT_MAX_AGE_SECONDS)
         findings.append(Finding("TR-ENV-002", Status.FAIL, f"iat must be a Unix timestamp >= {_IAT_MIN}, got {iat!r}"))
 
     subject = trace.get("subject", "")
-    if isinstance(subject, str) and _SUBJECT_RE.match(subject):
+    if isinstance(subject, str) and _SUBJECT_RE.fullmatch(subject):
         findings.append(Finding("TR-ENV-003", Status.PASS, f"subject is a valid workload identity URI ({subject!r})"))
     else:
         findings.append(Finding("TR-ENV-003", Status.FAIL, f"subject must be a SPIFFE URI (spiffe://) or DID URI (did:), got {subject!r}"))

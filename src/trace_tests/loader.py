@@ -11,6 +11,41 @@ class LoadError(Exception):
     pass
 
 
+def _refuse_duplicates(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    obj: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in obj:
+            raise LoadError(f"Invalid JSON: duplicate member name {key!r}")
+        obj[key] = value
+    return obj
+
+
+def loads_strict(raw: bytes) -> Any:
+    """Parse untrusted JSON bytes, raising only :class:`LoadError`.
+
+    Three things ``json.loads`` does not do on its own:
+
+    * Duplicate member names are refused. ``json.loads`` keeps the last, the
+      signature is checked over that, and a consumer whose parser keeps the
+      first reads a value no signature covered. RFC 8785 is defined over
+      I-JSON (RFC 7493), which forbids duplicates, so such a record has no
+      canonical form to verify in the first place.
+    * Bytes that are not UTF-8 are a ``LoadError``, not ``UnicodeDecodeError``.
+    * Nesting deep enough to exhaust the interpreter stack is a ``LoadError``,
+      not ``RecursionError``.
+    """
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise LoadError(f"Invalid JSON: not UTF-8 ({exc})") from exc
+    try:
+        return json.loads(text, object_pairs_hook=_refuse_duplicates)
+    except json.JSONDecodeError as exc:
+        raise LoadError(f"Invalid JSON: {exc}") from exc
+    except RecursionError as exc:
+        raise LoadError("Invalid JSON: nested too deeply to parse") from exc
+
+
 def load_record(path: str) -> tuple[dict[str, Any], str]:
     """Load a trust record from *path*.
 
@@ -27,9 +62,16 @@ def load_record(path: str) -> tuple[dict[str, Any], str]:
         raise LoadError(f"File not found: {path}")
 
     try:
-        data: dict[str, Any] = json.loads(p.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        raise LoadError(f"Invalid JSON: {exc}") from exc
+        raw = p.read_bytes()
+    except OSError as exc:
+        raise LoadError(f"Cannot read {path}: {exc}") from exc
+
+    return parse_record(raw)
+
+
+def parse_record(raw: bytes) -> tuple[dict[str, Any], str]:
+    """:func:`load_record` on bytes already in hand; raises only :class:`LoadError`."""
+    data = loads_strict(raw)
 
     if not isinstance(data, dict):
         raise LoadError("Record must be a JSON object")

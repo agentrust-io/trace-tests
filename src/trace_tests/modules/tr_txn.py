@@ -7,6 +7,8 @@ from typing import Any
 
 from trace_tests.result import Finding, Status
 
+# Byte-equal to the schema pattern (test_digest_parity) and always applied with
+# fullmatch: Python's $ also matches before a trailing newline, ECMA-262's does not.
 _DIGEST_RE = re.compile(r"^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})$")
 
 
@@ -22,7 +24,7 @@ def check(trace: dict[str, Any]) -> list[Finding]:
         return [Finding("TR-TXN-001", Status.FAIL, "TR-TXN-001: tool_transcript must be an object")]
 
     h = txn.get("hash", "")
-    if _DIGEST_RE.match(str(h)):
+    if _DIGEST_RE.fullmatch(str(h)):
         findings.append(Finding("TR-TXN-001", Status.PASS, "tool_transcript.hash has valid digest format"))
     else:
         findings.append(Finding(
