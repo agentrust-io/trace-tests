@@ -2,14 +2,25 @@
 
 ## Unreleased
 
+## v0.6.1 - 2026-09-26
+
+### Changed
+
+Each change here refuses input that 0.6.0 accepted, so a record that passed on 0.6.0 can fail on 0.6.1. The first two are the ones producers will hit.
+
+- **Duplicate member names are refused at load (exit 2) (#124).** This covers records, anchor receipts and policy manifests. `json.loads` kept the last value, the signature was checked over it, and a consumer whose parser keeps the first read a value no signature covered. RFC 8785 is defined over I-JSON, which forbids duplicates. A producer that emits a repeated key now gets a load error instead of a report.
+- **TR-SIG accepts one spelling of `signature` and `cnf.jwk.x` (#124):** unpadded base64url. The standard alphabet, `=` padding, characters outside the alphabet and nonzero trailing bits were all accepted before, and since the signature sits outside the body it signs, each was a different record that still verified. A record signed with padded or standard base64 now fails TR-SIG.
+- Digest, `subject` and receipt hash checks use `fullmatch` (#124). Python's `$` matched before a trailing newline, so `sha256:<64 hex>` passed TR-RTE-002, TR-SCA-002, TR-TXN-001, TR-POL-001 and TR-ENV-003.
+- TR-ANC-002 refuses claims outside the anchor-leaf profile of registry-anchor-v1 section 1: non-integer numbers and integers outside the safe range, whose leaf bytes differ between implementations (#124).
+
 ### Fixed
 
-- TR-SIG decodes `signature` and `cnf.jwk.x` as unpadded base64url in its one canonical spelling. The standard alphabet, padding, characters outside the alphabet and nonzero trailing bits were all accepted before, and since the signature sits outside the body it signs, each was a different record that still verified.
-- Records, anchor receipts and policy manifests with duplicate member names are refused at load (exit 2). `json.loads` kept the last value, the signature was checked over it, and a consumer whose parser keeps the first read a value no signature covered. RFC 8785 is defined over I-JSON, which forbids duplicates.
-- Digest, `subject` and receipt hash checks use `fullmatch`. Python's `$` matched before a trailing newline, so `sha256:<64 hex>\n` passed TR-RTE-002, TR-SCA-002, TR-TXN-001, TR-POL-001 and TR-ENV-003.
-- TR-ANC-002 refuses claims outside the anchor-leaf profile of registry-anchor-v1 section 1: non-integer numbers and integers outside the safe range, whose leaf bytes differ between implementations.
-- Untrusted input no longer reaches the CLI as a traceback: a non-ASCII `runtime.nonce` (`TypeError` from `hmac.compare_digest`), a lone surrogate in an object key (`UnicodeEncodeError` from `rfc8785`), a non-string `transparency` in `report --html`, and non-UTF-8, over-deep or unreadable input files. Each is now a finding or a load error.
-- ClusterFuzzLite targets over the record loader and every module, the signature path and the anchor receipt, run on pull requests and nightly.
+- Untrusted input no longer reaches the CLI as a traceback (#124): a non-ASCII `runtime.nonce` (`TypeError` from `hmac.compare_digest`), a lone surrogate in an object key (`UnicodeEncodeError` from `rfc8785`), a non-string `transparency` in `report --html`, and non-UTF-8, over-deep or unreadable input files. Each is now a finding or a load error.
+
+### Internal
+
+- ClusterFuzzLite targets over the record loader and every module, the signature path and the anchor receipt, run on pull requests and nightly (#124).
+- The maintainer approval gate drops the unused `statuses: write` scope and runs with `contents: read` and `pull-requests: read` (#125).
 
 ## v0.6.0 - 2026-09-25
 
