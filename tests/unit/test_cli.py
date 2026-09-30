@@ -4,6 +4,7 @@ import json
 import pathlib
 import time
 
+import click
 import pytest
 from click.testing import CliRunner
 
@@ -93,3 +94,29 @@ def test_dunder_version_is_not_a_stale_literal():
     import trace_tests
 
     assert trace_tests.__version__ == version("agentrust-trace-tests")
+
+
+def _iter_commands(cmd: click.Command) -> list[click.Command]:
+    yielded = [cmd]
+    if isinstance(cmd, click.Group):
+        for subcmd in cmd.commands.values():
+            yielded.extend(_iter_commands(subcmd))
+    return yielded
+
+
+def test_all_options_have_help():
+    """Every Click command option must have non-empty help text."""
+    missing = []
+    for cmd in _iter_commands(main):
+        for param in cmd.params:
+            if isinstance(param, click.Option) and not (param.help and param.help.strip()):
+                missing.append((cmd.name, param.opts))
+    assert not missing, f"Options missing help text: {missing}"
+
+
+def test_report_help_describes_max_age():
+    """`report --help` must describe `--max-age`."""
+    result = CliRunner().invoke(main, ["report", "--help"])
+    assert result.exit_code == 0
+    assert "--max-age" in result.output
+    assert "Maximum allowed record age in seconds" in result.output

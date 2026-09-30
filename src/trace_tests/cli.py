@@ -263,6 +263,7 @@ def verify(
     default=DEFAULT_MAX_AGE_SECONDS,
     type=click.IntRange(min=1),
     show_default=True,
+    help="Maximum allowed record age in seconds (iat freshness window)",
 )
 @click.option(
     "--html", "html_out", type=click.Path(), help="Write a self-contained HTML report here"
