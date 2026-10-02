@@ -33,6 +33,21 @@ verifier's iterative fn/sn algorithm. `tests/test_anchor_vectors.py` checks the
 fixed artifacts against the inclusion module and verifies reproducibility and
 positive twins. Run `pytest tests/test_anchor_vectors.py` to exercise the set.
 
+An optional second-language check runs with Node.js 18+:
+
+```sh
+node tests/vectors/anchor-inclusion/cross_check.mjs
+```
+
+It targets this fixture set rather than being a general conformance verifier.
+It reads the fixed JSON files directly, implements ASCII escaping and Unicode
+code-point ordering in JavaScript, and reconstructs proofs via recursive tree
+splits. It checks all 27 outcomes plus the nine positive preimages, leaf hashes,
+batch roots, counts and leaf positions. It imports neither the Python generator
+nor the verifier. Node is optional and is not added to the Python CI or package
+dependencies. Agreement between these implementations is a local cross-check,
+not acceptance by an external verifier maintainer or a whole-record verdict.
+
 Limits: no online receipt retrieval, registry append-only check, signature
 validation, MMR receipts, or whole-record Level 2 verdict is measured here. This
 set does not resolve trace-spec#448 row 21's self-referential transparency issue.
