@@ -4,6 +4,11 @@
 
 # TRACE Conformance Test Suite
 
+> **Source development moved:** The canonical suite is now [trace-spec/conformance](https://github.com/agentrust-io/trace-spec/tree/main/conformance). Open new code changes there. The `agentrust-trace-tests` package name and `trace-tests` CLI are unchanged.
+>
+> This repository temporarily retains the existing package publisher, documentation deployment and [open PR #137](https://github.com/agentrust-io/trace-tests/pull/137) while their cutover is verified. Historical releases, issues and commit URLs remain valid. See the [cutover checklist](https://github.com/agentrust-io/trace-spec/blob/main/docs/repository-consolidation.md).
+
+
 Community updates and contributor highlights: [AgenTrust on LinkedIn](https://www.linkedin.com/company/agentrust-io/).
 
 ### Check a TRACE record and see which conformance level it reaches
