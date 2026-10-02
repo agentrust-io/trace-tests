@@ -9,6 +9,22 @@ Thank you for your interest in contributing to the TRACE test suite.
 3. Commit using [Conventional Commits](https://www.conventionalcommits.org)
 4. Open a pull request against `main`
 
+## Running tests locally
+
+From the repository root, use Python 3.11 or later in a virtual environment:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+pytest
+ruff check .
+```
+
+On Windows, activate the environment with `.venv\Scripts\Activate.ps1` in
+PowerShell instead. To run the same subsets as CI, use
+`pytest -m "level0 or negative"` and `pytest tests/unit/`.
+
 ## Using AI to contribute
 
 Use agents. A lot of this was built with them and saying otherwise would be dishonest.
